@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { StoreProvider } from "../lib/store";
-import { colors } from "../components/ui";
+import { colors, fontFamilies } from "../components/ui";
 export default function RootLayout() {
   return (
     <StoreProvider>
@@ -11,7 +11,11 @@ export default function RootLayout() {
           headerStyle: { backgroundColor: colors.bg },
           headerTintColor: colors.green,
           headerShadowVisible: false,
-          headerTitleStyle: { fontSize: 17 },
+          headerTitleStyle: {
+            fontSize: 17,
+            fontFamily: fontFamilies.heading,
+            fontWeight: "700",
+          },
           contentStyle: { backgroundColor: colors.bg },
           headerBackTitle: "Quay lại",
         }}

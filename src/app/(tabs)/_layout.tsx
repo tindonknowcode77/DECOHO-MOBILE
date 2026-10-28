@@ -1,6 +1,6 @@
 import { Tabs, router } from "expo-router";
 import { Image, Text, View } from "react-native";
-import { colors, Icon, IconButton, s } from "../../components/ui";
+import { colors, fontFamilies, Icon, IconButton, s } from "../../components/ui";
 import { useStore } from "../../lib/store";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 const tabs = [
@@ -37,7 +37,7 @@ export default function TabLayout() {
           </View>
         ),
         tabBarActiveTintColor: colors.green,
-        tabBarInactiveTintColor: "#93978e",
+        tabBarInactiveTintColor: "#708164",
         tabBarStyle: {
           backgroundColor: "#fffefb",
           borderTopColor: colors.line,
@@ -45,7 +45,11 @@ export default function TabLayout() {
           paddingTop: 5,
           paddingBottom: Math.max(8, insets.bottom),
         },
-        tabBarLabelStyle: { fontSize: 10, fontWeight: "600" },
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: "600",
+          fontFamily: fontFamilies.heading,
+        },
       }}
     >
       {tabs.map(([name, title, icon]) => (

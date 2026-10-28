@@ -5,6 +5,8 @@ import { router } from "expo-router";
 import { useAction } from "../lib/hooks";
 import { useStore } from "../lib/store";
 
+import { colors, fontFamilies } from "./ui";
+
 function loadWebGoogleScript(): Promise<void> {
   return new Promise((resolve, reject) => {
     if (typeof window === "undefined") return resolve();
@@ -150,9 +152,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   text: {
-    color: "#20382d",
+    color: colors.ink,
     fontSize: 15,
     fontWeight: "600",
+    fontFamily: fontFamilies.heading,
   },
   errorBox: {
     flexDirection: "row",
@@ -169,5 +172,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     flex: 1,
     lineHeight: 18,
+    fontFamily: fontFamilies.body,
   },
 });

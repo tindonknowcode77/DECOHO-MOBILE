@@ -19,15 +19,33 @@ import { useStore } from "../lib/store";
 import { money, priceOf, type Product } from "../lib/types";
 
 export const colors = {
-  bg: "#f8f6f1",
-  green: "#245c48",
-  ink: "#20382d",
-  muted: "#666e63",
-  lime: "#d9e8b8",
-  line: "#e5e5da",
+  bg: "#f7f3ec",
+  green: "#2e6f5e",
+  greenDark: "#245747",
+  ink: "#254f43",
+  muted: "#646a61",
+  lime: "#dfe8d3",
+  limeBright: "#cbe782",
+  line: "#ded6c9",
   white: "#ffffff",
   orange: "#c77b57",
+  badgeBg: "#fbf3e7",
+  badgeText: "#9f663d",
 };
+
+export const fontFamilies = {
+  body: Platform.select({
+    web: 'Calibri, Carlito, "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif',
+    ios: "System",
+    android: "sans-serif",
+  }),
+  heading: Platform.select({
+    web: 'Calibri, Carlito, "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif',
+    ios: "System",
+    android: "sans-serif",
+  }),
+};
+
 export const s = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.bg },
   content: { padding: 20, paddingBottom: 40, gap: 24 },
@@ -40,56 +58,98 @@ export const s = StyleSheet.create({
   },
   title: {
     color: colors.ink,
-    fontSize: 29,
+    fontSize: 28,
     fontWeight: "700",
-    letterSpacing: -1,
-    lineHeight: 35,
+    letterSpacing: -0.8,
+    lineHeight: 34,
+    fontFamily: fontFamilies.heading,
   },
-  heading: { fontSize: 20, color: colors.ink, fontWeight: "700" },
-  body: { fontSize: 15, lineHeight: 23, color: colors.ink },
-  muted: { fontSize: 13, lineHeight: 21, color: colors.muted },
+  heading: {
+    fontSize: 20,
+    color: colors.ink,
+    fontWeight: "700",
+    letterSpacing: -0.4,
+    fontFamily: fontFamilies.heading,
+  },
+  body: {
+    fontSize: 15,
+    lineHeight: 23,
+    color: colors.ink,
+    fontFamily: fontFamilies.body,
+  },
+  muted: {
+    fontSize: 13,
+    lineHeight: 21,
+    color: colors.muted,
+    fontFamily: fontFamilies.body,
+  },
   label: {
     color: colors.green,
     fontSize: 11,
-    letterSpacing: 2,
+    letterSpacing: 1.8,
     fontWeight: "700",
+    fontFamily: fontFamilies.heading,
   },
   card: {
     backgroundColor: colors.white,
-    borderRadius: 22,
+    borderRadius: 20,
     padding: 18,
     gap: 12,
     borderWidth: 1,
     borderColor: colors.line,
+    shadowColor: "#253c2e",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 1,
   },
   input: {
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.line,
     borderRadius: 14,
-    padding: 15,
-    fontSize: 16,
+    padding: 14,
+    fontSize: 15,
     color: colors.ink,
-    minHeight: 50,
+    fontFamily: fontFamilies.body,
+    minHeight: 48,
   },
   button: {
     backgroundColor: colors.green,
     minHeight: 48,
-    borderRadius: 15,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
     gap: 8,
     paddingHorizontal: 20,
     paddingVertical: 12,
+    shadowColor: colors.green,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  buttonText: { color: colors.white, fontWeight: "700", fontSize: 14 },
-  error: { color: "#a34131", fontSize: 14, lineHeight: 21 },
+  buttonText: {
+    color: colors.white,
+    fontWeight: "700",
+    fontSize: 14,
+    letterSpacing: 0.2,
+    fontFamily: fontFamilies.heading,
+  },
+  error: {
+    color: "#a34131",
+    fontSize: 13,
+    lineHeight: 19,
+    fontFamily: fontFamilies.body,
+  },
   chip: {
     borderRadius: 24,
-    paddingHorizontal: 17,
-    paddingVertical: 12,
-    backgroundColor: "#ebece2",
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.line,
   },
   divider: { height: 1, backgroundColor: colors.line },
 });
@@ -339,6 +399,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   return children;
 }
 export function ProductCard({ product }: { product: Product }) {
+  const hasDiscount = Boolean(product.discount && product.discount > 0);
   return (
     <Pressable
       accessibilityRole="button"
@@ -348,38 +409,99 @@ export function ProductCard({ product }: { product: Product }) {
         flex: 1,
         minWidth: 0,
         backgroundColor: "#fff",
-        borderRadius: 20,
+        borderRadius: 18,
         padding: 8,
         gap: 8,
         borderWidth: 1,
         borderColor: colors.line,
+        position: "relative",
       }}
     >
+      {hasDiscount && (
+        <View
+          style={{
+            position: "absolute",
+            top: 14,
+            left: 14,
+            backgroundColor: colors.badgeBg,
+            paddingHorizontal: 7,
+            paddingVertical: 2,
+            borderRadius: 10,
+            zIndex: 2,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 10,
+              fontWeight: "700",
+              color: colors.badgeText,
+              fontFamily: fontFamilies.heading,
+            }}
+          >
+            −{product.discount}%
+          </Text>
+        </View>
+      )}
       <Photo uri={product.image ?? product.images?.[0]} height={155} />
-      <View style={{ padding: 6, gap: 6 }}>
-        <Text style={s.muted} numberOfLines={1}>
+      <View style={{ padding: 6, gap: 5 }}>
+        <Text
+          style={[
+            s.muted,
+            {
+              fontSize: 11,
+              textTransform: "uppercase",
+              letterSpacing: 0.8,
+              fontFamily: fontFamilies.body,
+            },
+          ]}
+          numberOfLines={1}
+        >
           {product.category ?? "Nội thất"}
         </Text>
         <Text
           numberOfLines={2}
-          style={{ color: colors.ink, fontWeight: "600", fontSize: 15, lineHeight: 21, minHeight: 42 }}
+          style={{
+            color: colors.ink,
+            fontWeight: "600",
+            fontSize: 14,
+            lineHeight: 20,
+            minHeight: 40,
+            fontFamily: fontFamilies.heading,
+          }}
         >
           {product.name}
         </Text>
-        <Text style={{ color: colors.green, fontWeight: "700" }}>
-          {money(priceOf(product))}
-        </Text>
-        {!!product.discount && (
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "baseline",
+            gap: 6,
+            marginTop: 2,
+          }}
+        >
           <Text
             style={{
-              color: colors.muted,
-              textDecorationLine: "line-through",
-              fontSize: 11,
+              color: colors.green,
+              fontWeight: "700",
+              fontSize: 14,
+              fontFamily: fontFamilies.heading,
             }}
           >
-            {money(product.price)}
+            {money(priceOf(product))}
           </Text>
-        )}
+          {hasDiscount && (
+            <Text
+              style={{
+                color: "#9c9e90",
+                textDecorationLine: "line-through",
+                fontSize: 11,
+                fontFamily: fontFamilies.body,
+              }}
+            >
+              {money(product.price)}
+            </Text>
+          )}
+        </View>
       </View>
     </Pressable>
   );
@@ -400,27 +522,35 @@ export function Chips({
       contentContainerStyle={{ gap: 8 }}
       keyboardShouldPersistTaps="handled"
     >
-      {items.map((item) => (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ selected: item.id === value }}
-          key={item.id}
-          onPress={() => onChange(item.id)}
-          style={[
-            s.chip,
-            item.id === value && { backgroundColor: colors.green },
-          ]}
-        >
-          <Text
-            style={{
-              color: item.id === value ? "#fff" : colors.green,
-              fontSize: 13,
-            }}
+      {items.map((item) => {
+        const active = item.id === value;
+        return (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ selected: active }}
+            key={item.id}
+            onPress={() => onChange(item.id)}
+            style={[
+              s.chip,
+              active && {
+                backgroundColor: colors.green,
+                borderColor: colors.green,
+              },
+            ]}
           >
-            {item.label}
-          </Text>
-        </Pressable>
-      ))}
+            <Text
+              style={{
+                color: active ? "#fff" : colors.muted,
+                fontWeight: active ? "700" : "500",
+                fontSize: 13,
+                fontFamily: active ? fontFamilies.heading : fontFamilies.body,
+              }}
+            >
+              {item.label}
+            </Text>
+          </Pressable>
+        );
+      })}
     </ScrollView>
   );
 }
@@ -444,8 +574,19 @@ export function MenuLink({
       <View style={[s.row, { flex: 1 }]}>
         <Icon name={icon} />
         <View style={{ flex: 1 }}>
-          <Text style={s.body}>{title}</Text>
-          {subtitle && <Text style={s.muted}>{subtitle}</Text>}
+          <Text
+            style={[
+              s.body,
+              { fontWeight: "600", fontFamily: fontFamilies.heading },
+            ]}
+          >
+            {title}
+          </Text>
+          {subtitle && (
+            <Text style={[s.muted, { fontFamily: fontFamilies.body }]}>
+              {subtitle}
+            </Text>
+          )}
         </View>
       </View>
       <Icon name="chevron-forward" size={17} />

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { colors, fontFamilies } from "./ui";
 import { useStore } from "../lib/store";
 
 export function GoogleLogin({ title = "Tiếp tục với Google" }: { title?: string }) {
@@ -124,7 +125,8 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 14,
-    color: "#20382d",
+    color: colors.ink,
+    fontFamily: fontFamilies.body,
   },
   errorBox: {
     flexDirection: "row",
@@ -142,5 +144,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     flex: 1,
     lineHeight: 18,
+    fontFamily: fontFamilies.body,
   },
 });

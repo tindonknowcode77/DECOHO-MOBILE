@@ -14,7 +14,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams, type Href } from "expo-router";
 import { GoogleLogin } from "../../components/GoogleLogin";
-import { colors } from "../../components/ui";
+import { colors, fontFamilies } from "../../components/ui";
 import { api } from "../../lib/client";
 import { useAction } from "../../lib/hooks";
 import { useStore } from "../../lib/store";
@@ -629,14 +629,15 @@ const styles = StyleSheet.create({
   },
   brandTagline: {
     fontSize: 14,
-    color: "#6b7568",
+    color: colors.muted,
     marginTop: 8,
     textAlign: "center",
     lineHeight: 20,
+    fontFamily: fontFamilies.body,
   },
   tabSwitcher: {
     flexDirection: "row",
-    backgroundColor: "#ebe9e2",
+    backgroundColor: "#e8e5db",
     borderRadius: 16,
     padding: 4,
     marginBottom: 18,
@@ -658,11 +659,13 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#747c71",
+    color: colors.muted,
+    fontFamily: fontFamilies.heading,
   },
   tabTextActive: {
     color: colors.green,
     fontWeight: "700",
+    fontFamily: fontFamilies.heading,
   },
   card: {
     backgroundColor: "#ffffff",
@@ -670,7 +673,7 @@ const styles = StyleSheet.create({
     padding: 22,
     gap: 16,
     borderWidth: 1,
-    borderColor: "#e6e2d8",
+    borderColor: colors.line,
     shadowColor: "#20382d",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
@@ -683,14 +686,15 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#2f382d",
+    color: colors.ink,
+    fontFamily: fontFamilies.heading,
   },
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#faf9f6",
+    backgroundColor: "#ffffff",
     borderWidth: 1.5,
-    borderColor: "#e7e2d7",
+    borderColor: colors.line,
     borderRadius: 16,
     height: 52,
     paddingHorizontal: 14,
@@ -706,6 +710,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     color: colors.ink,
+    fontFamily: fontFamilies.body,
     height: "100%",
   },
   inputRightAction: {
@@ -719,6 +724,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.green,
     fontWeight: "600",
+    fontFamily: fontFamilies.heading,
   },
   primaryButton: {
     backgroundColor: colors.green,
@@ -744,6 +750,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
     letterSpacing: 0.2,
+    fontFamily: fontFamilies.heading,
   },
   dividerContainer: {
     flexDirection: "row",
@@ -754,23 +761,26 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: "#eae5dc",
+    backgroundColor: colors.line,
   },
   dividerText: {
     fontSize: 12,
-    color: "#979e94",
+    color: colors.muted,
     fontWeight: "500",
+    fontFamily: fontFamilies.body,
   },
   termsText: {
     fontSize: 12,
     lineHeight: 18,
-    color: "#838c80",
+    color: colors.muted,
     textAlign: "center",
     marginTop: 2,
+    fontFamily: fontFamilies.body,
   },
   termsLink: {
     color: colors.green,
     fontWeight: "600",
+    fontFamily: fontFamilies.heading,
   },
   alertError: {
     flexDirection: "row",
@@ -787,6 +797,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#a34131",
     lineHeight: 19,
+    fontFamily: fontFamilies.body,
   },
   alertSuccess: {
     flexDirection: "row",
@@ -801,8 +812,9 @@ const styles = StyleSheet.create({
   alertSuccessText: {
     flex: 1,
     fontSize: 13,
-    color: "#245c48",
+    color: colors.green,
     lineHeight: 19,
+    fontFamily: fontFamilies.body,
   },
   footerLinks: {
     marginTop: 22,
@@ -816,12 +828,14 @@ const styles = StyleSheet.create({
   },
   switchPromptText: {
     fontSize: 14,
-    color: "#6b7568",
+    color: colors.muted,
+    fontFamily: fontFamilies.body,
   },
   switchActionText: {
     fontSize: 14,
     color: colors.green,
     fontWeight: "700",
+    fontFamily: fontFamilies.heading,
   },
   subLinkButton: {
     paddingVertical: 6,
@@ -830,13 +844,14 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.green,
     fontWeight: "600",
+    fontFamily: fontFamilies.heading,
   },
   resendCard: {
     width: "100%",
     backgroundColor: "#ffffff",
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#e8e5dc",
+    borderColor: colors.line,
     padding: 14,
     marginTop: 4,
   },
@@ -851,12 +866,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     color: colors.green,
+    fontFamily: fontFamilies.heading,
   },
   resendForm: {
     marginTop: 14,
     gap: 12,
     borderTopWidth: 1,
-    borderTopColor: "#f0ece4",
+    borderTopColor: colors.line,
     paddingTop: 12,
   },
   resendButton: {
@@ -870,11 +886,13 @@ const styles = StyleSheet.create({
     color: colors.green,
     fontSize: 13,
     fontWeight: "700",
+    fontFamily: fontFamilies.heading,
   },
   enterTokenText: {
     fontSize: 12,
-    color: "#838c80",
+    color: colors.muted,
     textAlign: "center",
     textDecorationLine: "underline",
+    fontFamily: fontFamilies.body,
   },
 });
