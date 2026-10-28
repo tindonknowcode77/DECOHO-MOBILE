@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "DECOHO",
+    "slug": "decoho-mobile",
+    "scheme": "decoho",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/decoho-icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "icon": "./assets/decoho-icon.png",
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/decoho-icon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Cho phép DECOHO chọn ảnh phòng và chia sẻ không gian của bạn.",
+          "cameraPermission": "Cho phép DECOHO chụp ảnh để nhận diện nội thất.",
+          "microphonePermission": false
+        }
+      ],
+      "expo-video",
+      "@react-native-google-signin/google-signin"
+    ],
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "3df1d541-7305-40f6-a671-7af8b00f0372"
+      }
+    }
+  }
+}
