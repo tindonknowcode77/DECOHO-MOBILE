@@ -19,11 +19,13 @@ const defaultShowrooms: Showroom[] = [
 
 export default function Showrooms() {
   const data = useResource<Showroom[]>("/showrooms");
-  const [selected, setSelected] = useState<string | null>("tripo-interior-room");
+  const [selected, setSelected] = useState<string | null>(null);
   const [revision, bump] = useState(0);
 
-  const rooms = (data.data && data.data.length > 0) ? data.data : defaultShowrooms;
-  const room = rooms.find((x) => x._id === selected) || rooms[0];
+  const rawList = Array.isArray(data.data) ? data.data : (data.data ? [data.data as Showroom] : []);
+  const rooms = rawList.length > 0 ? rawList : defaultShowrooms;
+  const currentId = selected || rooms[0]?._id;
+  const room = rooms.find((x) => x._id === currentId) || rooms[0];
 
   return (
     <Screen>
@@ -37,7 +39,7 @@ export default function Showrooms() {
         error={data.error && !rooms.length ? data.error : undefined}
         retry={data.reload}
       />
-      {room && selected ? (
+      {room && (selected || rooms.length === 1) ? (
         <>
           <View style={s.card}>
             <Text style={s.heading}>{room.title}</Text>
