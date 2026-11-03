@@ -26,6 +26,7 @@ type Store = {
   cartReady: boolean;
   login: (email: string, password: string) => Promise<void>;
   googleLogin: (credential: string) => Promise<void>;
+  loginWithTokens: (tokens: { accessToken: string; refreshToken: string }) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   requireLogin: () => boolean;
@@ -218,6 +219,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         cartReady,
         login,
         googleLogin,
+        loginWithTokens: finishLogin,
         logout,
         refreshUser,
         requireLogin,

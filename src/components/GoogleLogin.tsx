@@ -2,6 +2,7 @@ import Constants, { ExecutionEnvironment } from "expo-constants";
 import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import { useAction } from "../lib/hooks";
 import { useStore } from "../lib/store";
 
@@ -32,8 +33,36 @@ export function GoogleLogin({ title = "Tiếp tục với Google" }: { title?: s
   const store = useStore();
   const clientId =
     process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
+    process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ||
     "1047142545241-pge0ccn9njp66g9sjoo6bgo8dnihlpr6.apps.googleusercontent.com";
   if (!clientId) return null;
+
+  async function loginViaWebBrowser() {
+    const webUrl = (process.env.EXPO_PUBLIC_WEB_URL || "https://decoho-fe.vercel.app").replace(/\/$/, "");
+    const redirectScheme = "decoho://auth/callback";
+    const authUrl = `${webUrl}/login?mobileRedirect=${encodeURIComponent(redirectScheme)}`;
+
+    const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectScheme);
+    if (result.type === "success" && result.url) {
+      try {
+        const urlStr = result.url.replace("#", "?");
+        const queryIdx = urlStr.indexOf("?");
+        if (queryIdx !== -1) {
+          const queryString = urlStr.slice(queryIdx + 1);
+          const params = new URLSearchParams(queryString);
+          const accessToken = params.get("accessToken");
+          const refreshToken = params.get("refreshToken");
+          if (accessToken) {
+            await store.loginWithTokens({ accessToken, refreshToken: refreshToken || "" });
+            router.replace("/account");
+            return;
+          }
+        }
+      } catch (e) {
+        console.error("Lỗi đọc token từ WebBrowser:", e);
+      }
+    }
+  }
 
   async function handleGoogleLogin() {
     if (Platform.OS === "web") {
@@ -62,31 +91,36 @@ export function GoogleLogin({ title = "Tiếp tục với Google" }: { title?: s
       return;
     }
 
-    // Native Mobile (Android APK / iOS)
+    // 1. Chạy trên Expo Go -> Dùng WebBrowser AuthSession mượt mà, không bị chặn
     if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) {
-      throw new Error(
-        "Google Sign-In native cần chạy trên file APK đã cài đặt hoặc Development Build (không hỗ trợ Expo Go cơ bản).",
-      );
+      await loginViaWebBrowser();
+      return;
     }
 
-    const { GoogleSignin, isSuccessResponse } =
-      await import("@react-native-google-signin/google-signin");
-    GoogleSignin.configure({
-      webClientId: clientId,
-      iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-    });
-    await GoogleSignin.hasPlayServices({
-      showPlayServicesUpdateDialog: true,
-    });
-    const response = await GoogleSignin.signIn();
-    if (!isSuccessResponse(response)) return;
-    if (!response.data.idToken) {
-      throw new Error(
-        "Google chưa trả về thông tin đăng nhập. Vui lòng thử lại.",
-      );
+    // 2. Chạy trên file APK / Development Build -> Dùng Native Google Sign-in
+    try {
+      const { GoogleSignin, isSuccessResponse } =
+        await import("@react-native-google-signin/google-signin");
+      GoogleSignin.configure({
+        webClientId: clientId,
+        iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+      });
+      await GoogleSignin.hasPlayServices({
+        showPlayServicesUpdateDialog: true,
+      });
+      const response = await GoogleSignin.signIn();
+      if (!isSuccessResponse(response)) return;
+      if (!response.data?.idToken) {
+        throw new Error(
+          "Google chưa trả về thông tin đăng nhập. Vui lòng thử lại.",
+        );
+      }
+      await store.googleLogin(response.data.idToken);
+      router.replace("/account");
+    } catch (nativeErr: any) {
+      console.warn("Native Google login failed, using WebBrowser fallback:", nativeErr);
+      await loginViaWebBrowser();
     }
-    await store.googleLogin(response.data.idToken);
-    router.replace("/account");
   }
 
   return (
