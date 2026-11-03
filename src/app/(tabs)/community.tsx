@@ -43,20 +43,8 @@ export default function Community() {
         value={query}
         onChangeText={setQuery}
         onSubmitEditing={() => {
-          if (store.requireLogin()) {
-            setPage(1);
-            setSearch(query.trim());
-          }
-        }}
-      />
-      <Button
-        light
-        title="Tìm kiếm"
-        onPress={() => {
-          if (store.requireLogin()) {
-            setPage(1);
-            setSearch(query.trim());
-          }
+          setPage(1);
+          setSearch(query.trim());
         }}
       />
       <Chips
