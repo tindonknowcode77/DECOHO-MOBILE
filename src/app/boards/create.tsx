@@ -78,7 +78,7 @@ function Form() {
             body.append("description", description.trim());
             body.append("roomType", room);
             body.append("isPublic", "false");
-            await api("/moodboards/upload", {
+            await api("/product-spaces/upload", {
               method: "POST",
               body,
               timeout: 60000,

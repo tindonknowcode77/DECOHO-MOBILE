@@ -15,12 +15,12 @@ import { idOf, rooms, type Board, type Product } from "../../lib/types";
 export default function BoardDetail() {
   const {
     id,
-    kind = "moodboards",
+    kind = "product-spaces",
     mine,
   } = useLocalSearchParams<{ id: string; kind?: string; mine?: string }>();
   const source = kind === "product-spaces" ? "product-spaces" : "moodboards";
   const data = useResource<Board | Board[] | { items: Board[] }>(
-    mine ? "/moodboards/user/mine" : id ? `/${source}/${encodeURIComponent(id)}` : null,
+    mine ? "/product-spaces/mine" : id ? `/${source}/${encodeURIComponent(id)}` : null,
     { auth: Boolean(mine) },
   );
   const products = useResource<{ moodboardId: string; count: number; items: Product[] }>(

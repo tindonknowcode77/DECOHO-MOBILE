@@ -25,10 +25,10 @@ export default function Boards() {
   );
 }
 function Gallery({ mine = false }: { mine?: boolean }) {
-  const [kind, setKind] = useState("moodboards");
+  const [kind, setKind] = useState("product-spaces");
   const [room, setRoom] = useState("all");
   const data = useResource<Board[] | { items: Board[] }>(
-    mine ? "/moodboards/user/mine" : `/${kind}`,
+    mine ? "/product-spaces/mine" : `/${kind}`,
     { auth: mine },
   );
   const boards = data.data
@@ -48,8 +48,7 @@ function Gallery({ mine = false }: { mine?: boolean }) {
           value={kind}
           onChange={setKind}
           items={[
-            { id: "moodboards", label: "Moodboard" },
-            { id: "product-spaces", label: "Không gian sản phẩm" },
+            { id: "product-spaces", label: "Moodboard nổi bật" },
           ]}
         />
       )}

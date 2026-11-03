@@ -19,7 +19,7 @@ import { idOf, type Board, type Product } from "../../lib/types";
 import { useStore } from "../../lib/store";
 export default function Home() {
   const products = useResource<Product[]>("/products");
-  const boards = useResource<Board[] | { items: Board[] }>("/moodboards", { auth: false });
+  const boards = useResource<Board[] | { items: Board[] }>("/product-spaces", { auth: false });
   const { user } = useStore();
   return (
     <Screen>
@@ -127,7 +127,7 @@ export default function Home() {
             <Pressable
               accessibilityRole="button"
               key={idOf(board)}
-              onPress={() => router.push(`/boards/${idOf(board)}`)}
+              onPress={() => router.push({ pathname: "/boards/[id]", params: { id: idOf(board), kind: "product-spaces" } })}
               style={{ gap: 10 }}
             >
               <Photo uri={board.imageUrl} height={210} />
