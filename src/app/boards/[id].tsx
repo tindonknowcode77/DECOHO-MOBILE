@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Image, Pressable, Text, View, Share } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import {
@@ -7,11 +8,11 @@ import {
   s,
   Screen,
   State,
-  colors,
+  colors, Icon,
 } from "../../components/ui";
 import { useResource, useAction } from "../../lib/hooks";
 import { list } from "../../lib/client";
-import { idOf, rooms, type Board, type Product } from "../../lib/types";
+import { idOf, rooms, money, priceOf, type Board, type Product } from "../../lib/types";
 export default function BoardDetail() {
   const {
     id,
@@ -30,6 +31,7 @@ export default function BoardDetail() {
     { auth: false },
   );
   const action = useAction();
+  const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(null);
   const board = data.data
     ? mine
       ? list(data.data as Board[]).find((x) => idOf(x) === id)
@@ -76,36 +78,142 @@ export default function BoardDetail() {
           style={{ width: "100%", height: "100%" }}
           resizeMode="stretch"
         />
-        {points.map((point, i) => (
-          <Pressable
-            key={point._id ?? i}
-            accessibilityRole="button"
-            accessibilityLabel={`Xem sản phẩm ${i + 1}`}
-            onPress={() => router.push(`/products/${productId(point)}`)}
-            style={{
-              position: "absolute",
-              left: `${Math.max(0, Math.min(100, point.x))}%`,
-              top: `${Math.max(0, Math.min(100, point.y))}%`,
-              transform: [{ translateX: -22 }, { translateY: -22 }],
-              width: 44,
-              height: 44,
-              borderRadius: 22,
-              backgroundColor: "#ffffffdd",
-              alignItems: "center",
-              justifyContent: "center",
-              borderWidth: 2,
-              borderColor: colors.green,
-            }}
-          >
-            <Text style={{ color: colors.green, fontWeight: "700" }}>
-              {i + 1}
-            </Text>
-          </Pressable>
-        ))}
+        {points.map((point, i) => {
+          const isSelected = selectedPointIndex === i;
+          return (
+            <Pressable
+              key={point._id ?? i}
+              accessibilityRole="button"
+              accessibilityLabel={`Xem sản phẩm ${i + 1}`}
+              onPress={() => setSelectedPointIndex(isSelected ? null : i)}
+              style={{
+                position: "absolute",
+                left: `${Math.max(0, Math.min(100, point.x))}%`,
+                top: `${Math.max(0, Math.min(100, point.y))}%`,
+                transform: [{ translateX: -20 }, { translateY: -20 }],
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: isSelected ? colors.green : "#ffffffea",
+                alignItems: "center",
+                justifyContent: "center",
+                borderWidth: isSelected ? 3 : 2,
+                borderColor: isSelected ? "#fff" : colors.green,
+                shadowColor: "#000",
+                shadowOpacity: isSelected ? 0.35 : 0.15,
+                shadowRadius: 6,
+                elevation: isSelected ? 6 : 3,
+                zIndex: isSelected ? 10 : 2,
+              }}
+            >
+              <Text
+                style={{
+                  color: isSelected ? "#fff" : colors.green,
+                  fontWeight: "800",
+                  fontSize: 13,
+                }}
+              >
+                {i + 1}
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
       <Text style={s.muted}>
-        Chạm vào điểm ghim để xem sản phẩm trong không gian.
+        Chạm vào điểm ghim số trên ảnh để xem nhanh thông tin món đồ.
       </Text>
+
+      {/* Thẻ xem nhanh món đồ được chạm (Quick preview active pin) */}
+      {selectedPointIndex !== null && points[selectedPointIndex] && (() => {
+        const pt = points[selectedPointIndex];
+        const p =
+          products.data?.items.find((prod) => prod._id === productId(pt)) ??
+          pt.product ??
+          (typeof pt.productId === "object" ? pt.productId : undefined);
+        return (
+          <View
+            style={[
+              s.card,
+              {
+                backgroundColor: "#fff",
+                borderRadius: 20,
+                borderWidth: 1.5,
+                borderColor: colors.green,
+                padding: 14,
+                gap: 12,
+                shadowColor: colors.green,
+                shadowOpacity: 0.12,
+                shadowRadius: 10,
+                elevation: 4,
+              },
+            ]}
+          >
+            <View style={s.between}>
+              <View style={s.row}>
+                <View
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: 12,
+                    backgroundColor: colors.green,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Text style={{ color: "#fff", fontWeight: "800", fontSize: 11 }}>
+                    {selectedPointIndex + 1}
+                  </Text>
+                </View>
+                <Text style={{ fontSize: 11, fontWeight: "700", color: "#708164", textTransform: "uppercase" }}>
+                  Món đồ được chọn trong phòng
+                </Text>
+              </View>
+              <Pressable
+                hitSlop={8}
+                onPress={() => setSelectedPointIndex(null)}
+                style={{ padding: 4 }}
+              >
+                <Icon name="close" size={18} color={colors.muted} />
+              </Pressable>
+            </View>
+
+            <View style={s.row}>
+              <View
+                style={{
+                  width: 72,
+                  height: 72,
+                  borderRadius: 14,
+                  overflow: "hidden",
+                  backgroundColor: "#f0ede4",
+                }}
+              >
+                <Photo uri={p?.image || p?.images?.[0]} height={72} />
+              </View>
+              <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
+                {p?.category && (
+                  <Text style={{ fontSize: 10, fontWeight: "700", color: "#708164", textTransform: "uppercase" }}>
+                    {p.category}
+                  </Text>
+                )}
+                <Text style={[s.body, { fontWeight: "700", color: colors.ink }]} numberOfLines={2}>
+                  {p?.name ?? "Sản phẩm nội thất"}
+                </Text>
+                {p?.price !== undefined && (
+                  <Text style={{ fontSize: 14, fontWeight: "800", color: colors.green }}>
+                    {money(priceOf(p))}
+                  </Text>
+                )}
+              </View>
+            </View>
+
+            <Button
+              title="Xem chi tiết sản phẩm  ↗"
+              onPress={() => router.push(`/products/${productId(pt)}`)}
+            />
+          </View>
+        );
+      })()}
+
       <Button
         title="Chia sẻ cảm hứng"
         light
@@ -119,27 +227,84 @@ export default function BoardDetail() {
       />
       {!!action.error && <Text style={s.error}>{action.error}</Text>}
       <State loading={products.loading} error={products.error} retry={products.reload} />
-      {points.map((point, i) => {
-        const p =
-          products.data?.items.find((product) => product._id === productId(point)) ??
-          point.product ??
-          (typeof point.productId === "object" ? point.productId : undefined);
-        return (
-          <Pressable
-            accessibilityRole="button"
-            key={point._id ?? i}
-            style={[s.card, s.row]}
-            onPress={() => router.push(`/products/${productId(point)}`)}
-          >
-            <View style={{ width: 75 }}>
-              <Photo uri={p?.image || p?.images?.[0]} height={75} />
-            </View>
-            <Text style={[s.body, { flex: 1 }]}>
-              {i + 1}. {p?.name ?? "Xem chi tiết sản phẩm"}
-            </Text>
-          </Pressable>
-        );
-      })}
+
+      <View style={{ gap: 10 }}>
+        <Text style={s.heading}>
+          Sản phẩm trong moodboard ({points.length})
+        </Text>
+        {points.map((point, i) => {
+          const p =
+            products.data?.items.find((product) => product._id === productId(point)) ??
+            point.product ??
+            (typeof point.productId === "object" ? point.productId : undefined);
+          const isSelected = selectedPointIndex === i;
+          return (
+            <Pressable
+              accessibilityRole="button"
+              key={point._id ?? i}
+              style={[
+                s.card,
+                s.row,
+                {
+                  backgroundColor: isSelected ? "#f0f6f3" : "#fff",
+                  borderRadius: 18,
+                  padding: 12,
+                  gap: 14,
+                  borderWidth: isSelected ? 1.5 : 1,
+                  borderColor: isSelected ? colors.green : colors.line,
+                },
+              ]}
+              onPress={() => setSelectedPointIndex(isSelected ? null : i)}
+            >
+              <View style={{ width: 68, height: 68, borderRadius: 14, overflow: "hidden", backgroundColor: "#f0ede4" }}>
+                <Photo uri={p?.image || p?.images?.[0]} height={68} />
+              </View>
+              <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
+                <View style={s.row}>
+                  <View
+                    style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: 10,
+                      backgroundColor: isSelected ? colors.green : colors.lime,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: isSelected ? "#fff" : colors.green,
+                        fontWeight: "800",
+                        fontSize: 10,
+                      }}
+                    >
+                      {i + 1}
+                    </Text>
+                  </View>
+                  {p?.category && (
+                    <Text style={{ fontSize: 10, fontWeight: "700", color: "#708164", textTransform: "uppercase" }}>
+                      {p.category}
+                    </Text>
+                  )}
+                </View>
+                <Text style={[s.body, { fontWeight: "700", color: colors.ink }]} numberOfLines={1}>
+                  {p?.name ?? "Xem chi tiết sản phẩm"}
+                </Text>
+                {p?.price !== undefined && (
+                  <Text style={{ fontSize: 13, fontWeight: "700", color: colors.green }}>
+                    {money(priceOf(p))}
+                  </Text>
+                )}
+              </View>
+              <Icon
+                name="chevron-forward"
+                size={18}
+                color={isSelected ? colors.green : colors.muted}
+              />
+            </Pressable>
+          );
+        })}
+      </View>
       {!points.length && (
         <State empty="Không gian này chưa được gắn sản phẩm." />
       )}

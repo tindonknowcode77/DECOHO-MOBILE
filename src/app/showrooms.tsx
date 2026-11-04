@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { router } from "expo-router";
-import { Button, Heading, Photo, s, Screen, State } from "../components/ui";
+import { Button, Heading, Photo, s, Screen, State, colors, Icon } from "../components/ui";
 import { ShowroomViewer } from "../components/ShowroomViewer";
 import { useResource } from "../lib/hooks";
-import type { Showroom } from "../lib/types";
+import { money, priceOf, type Showroom } from "../lib/types";
 
 const defaultShowrooms: Showroom[] = [
   {
@@ -62,24 +62,51 @@ export default function Showrooms() {
           </View>
 
           {room.items && room.items.length > 0 && (
-            <View style={{ gap: 10 }}>
-              <Text style={s.heading}>Sản phẩm trong không gian</Text>
-              {room.items.map((item) => (
-                <Button
-                  key={item._id}
-                  light
-                  title={
-                    typeof item.productId === "object"
-                      ? item.productId.name
-                      : "Xem chi tiết sản phẩm"
-                  }
-                  onPress={() =>
-                    router.push(
-                      `/products/${typeof item.productId === "string" ? item.productId : item.productId._id}`,
-                    )
-                  }
-                />
-              ))}
+            <View style={{ gap: 12 }}>
+              <Text style={s.heading}>Sản phẩm trong không gian ({room.items.length})</Text>
+              {room.items.map((item, idx) => {
+                const prod = typeof item.productId === "object" ? item.productId : null;
+                const prodId = typeof item.productId === "string" ? item.productId : item.productId?._id;
+                return (
+                  <Pressable
+                    key={item._id ?? idx}
+                    accessibilityRole="button"
+                    onPress={() => prodId && router.push(`/products/${prodId}`)}
+                    style={[
+                      s.card,
+                      s.row,
+                      {
+                        backgroundColor: "#fff",
+                        borderRadius: 18,
+                        padding: 12,
+                        gap: 14,
+                        borderWidth: 1,
+                        borderColor: colors.line,
+                      },
+                    ]}
+                  >
+                    <View style={{ width: 68, height: 68, borderRadius: 14, overflow: "hidden", backgroundColor: "#f0ede4" }}>
+                      <Photo uri={prod?.image || prod?.images?.[0]} height={68} />
+                    </View>
+                    <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
+                      {prod?.category && (
+                        <Text style={{ fontSize: 10, fontWeight: "700", color: "#708164", textTransform: "uppercase" }}>
+                          {prod.category}
+                        </Text>
+                      )}
+                      <Text style={[s.body, { fontWeight: "700", color: colors.ink }]} numberOfLines={1}>
+                        {prod?.name ?? "Sản phẩm nội thất"}
+                      </Text>
+                      {prod?.price !== undefined && (
+                        <Text style={{ fontSize: 13, fontWeight: "700", color: colors.green }}>
+                          {money(priceOf(prod))}
+                        </Text>
+                      )}
+                    </View>
+                    <Icon name="chevron-forward" size={18} color={colors.muted} />
+                  </Pressable>
+                );
+              })}
             </View>
           )}
         </>
