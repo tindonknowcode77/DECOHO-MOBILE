@@ -3,7 +3,6 @@ import {
   Dimensions,
   Image,
   Modal,
-  PanResponder,
   Platform,
   Pressable,
   ScrollView,
@@ -11,13 +10,13 @@ import {
   Text,
   View,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
+import { WebView } from "react-native-webview";
 import * as WebBrowser from "expo-web-browser";
 import { router } from "expo-router";
 import { colors, fontFamilies, Icon } from "./ui";
 import { money, priceOf, type Product } from "../lib/types";
 
-export interface PendantLampItem {
+export interface PendantLamp {
   id: string;
   productId: string;
   name: string;
@@ -32,14 +31,98 @@ export interface PendantLampItem {
   imageOn: string;
 }
 
-export const LAMP_DEMO_ITEMS: PendantLampItem[] = [
+/* 1. ĐÈN ĐÁM MÂY KHI TẮT (Exact SVG from Web) */
+export const CLOUD_OFF_SVG = `data:image/svg+xml;utf8,${encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" width="400" height="600">
+  <defs>
+    <filter id="cloudSoftness" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="3" result="noise"/>
+      <feDisplacementMap in="blur" in2="noise" scale="14" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <linearGradient id="cordGrad" x1="196" y1="0" x2="204" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#262626"/>
+      <stop offset="38%" stop-color="#5c5c5c"/>
+      <stop offset="100%" stop-color="#1c1c1c"/>
+    </linearGradient>
+    <radialGradient id="cloudPuff" cx="45%" cy="38%" r="58%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="62%" stop-color="#f1f5f9"/>
+      <stop offset="100%" stop-color="#cbd5e1"/>
+    </radialGradient>
+  </defs>
+  <rect x="196" y="0" width="8" height="205" fill="url(#cordGrad)" />
+  <g filter="url(#cloudSoftness)">
+    <ellipse cx="200" cy="340" rx="135" ry="56" fill="#94a3b8" opacity="0.38"/>
+    <ellipse cx="120" cy="328" rx="82" ry="48" fill="#94a3b8" opacity="0.32"/>
+    <ellipse cx="280" cy="328" rx="84" ry="48" fill="#94a3b8" opacity="0.32"/>
+    <circle cx="118" cy="302" r="76" fill="url(#cloudPuff)"/>
+    <circle cx="282" cy="302" r="76" fill="url(#cloudPuff)"/>
+    <circle cx="158" cy="260" r="72" fill="url(#cloudPuff)"/>
+    <circle cx="242" cy="260" r="72" fill="url(#cloudPuff)"/>
+    <circle cx="200" cy="240" r="64" fill="url(#cloudPuff)"/>
+    <ellipse cx="200" cy="312" rx="142" ry="66" fill="url(#cloudPuff)"/>
+  </g>
+</svg>
+`)}`;
+
+/* 2. ĐÈN ĐÁM MÂY KHI BẬT SÁNG (Exact SVG from Web) */
+export const CLOUD_ON_SVG = `data:image/svg+xml;utf8,${encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" width="400" height="600">
+  <defs>
+    <filter id="cloudSoftnessOn" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="3" result="noise"/>
+      <feDisplacementMap in="blur" in2="noise" scale="14" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <linearGradient id="cordGradOn" x1="196" y1="0" x2="204" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#262626"/>
+      <stop offset="38%" stop-color="#5c5c5c"/>
+      <stop offset="100%" stop-color="#1c1c1c"/>
+    </linearGradient>
+    <radialGradient id="cloudWarmPuff" cx="50%" cy="48%" r="58%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="55%" stop-color="#fffbeb"/>
+      <stop offset="100%" stop-color="#fde68a"/>
+    </radialGradient>
+    <radialGradient id="lightCore" cx="50%" cy="55%" r="55%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="30%" stop-color="#fff8db" stop-opacity="0.95"/>
+      <stop offset="70%" stop-color="#ffd573" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.2"/>
+    </radialGradient>
+    <filter id="bloomGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+    </filter>
+  </defs>
+  <rect x="196" y="0" width="8" height="205" fill="url(#cordGradOn)" />
+  <g filter="url(#cloudSoftnessOn)">
+    <ellipse cx="200" cy="340" rx="135" ry="56" fill="#f59e0b" opacity="0.38"/>
+    <ellipse cx="120" cy="328" rx="82" ry="48" fill="#f59e0b" opacity="0.32"/>
+    <ellipse cx="280" cy="328" rx="84" ry="48" fill="#f59e0b" opacity="0.32"/>
+    <circle cx="118" cy="302" r="76" fill="url(#cloudWarmPuff)"/>
+    <circle cx="282" cy="302" r="76" fill="url(#cloudWarmPuff)"/>
+    <circle cx="158" cy="260" r="72" fill="url(#cloudWarmPuff)"/>
+    <circle cx="242" cy="260" r="72" fill="url(#cloudWarmPuff)"/>
+    <circle cx="200" cy="240" r="64" fill="url(#cloudWarmPuff)"/>
+    <ellipse cx="200" cy="312" rx="142" ry="66" fill="url(#cloudWarmPuff)"/>
+  </g>
+  <g filter="url(#bloomGlow)">
+    <circle cx="200" cy="295" r="105" fill="url(#lightCore)"/>
+    <ellipse cx="200" cy="312" rx="150" ry="80" fill="url(#lightCore)"/>
+    <circle cx="135" cy="302" r="82" fill="url(#lightCore)"/>
+    <circle cx="265" cy="302" r="82" fill="url(#lightCore)"/>
+  </g>
+</svg>
+`)}`;
+
+export const LAMP_DEMO_ITEMS: PendantLamp[] = [
   {
     id: "dome-enamel",
     productId: "6ae33590f9df260a0b6cfb65",
     name: "Đèn Thả Trần Bàn Ăn Bauhaus",
     tag: "685.420 ₫",
     drop: 0.62,
-    glow: "#ffdfa0",
     description:
       "Đèn thả trần phong cách Bauhaus tối giản, tạo điểm nhấn ấm cúng cho bàn ăn & phòng khách.",
     details: [
@@ -72,8 +155,8 @@ export const LAMP_DEMO_ITEMS: PendantLampItem[] = [
     productImage:
       "https://res.cloudinary.com/djzzwjznn/image/upload/v1792639905/decoho/products/gqr1j3ownrpfi4hhwao7.webp",
     productLink: "https://s.shopee.vn/5q98YM4rnF",
-    image: "cloud-svg",
-    imageOn: "cloud-svg-on",
+    image: CLOUD_OFF_SVG,
+    imageOn: CLOUD_ON_SVG,
   },
   {
     id: "glass-globe",
@@ -81,7 +164,6 @@ export const LAMP_DEMO_ITEMS: PendantLampItem[] = [
     name: "Đèn trần cổ điển",
     tag: "863.000 ₫",
     drop: 0.9,
-    glow: "#ffe09e",
     description:
       "Đèn trần phong cách cổ điển sang trọng, ánh sáng vàng ấm tôn lên đường nét nội thất.",
     details: [
@@ -103,7 +185,6 @@ export const LAMP_DEMO_ITEMS: PendantLampItem[] = [
     name: "Đèn Deco Đám Mây",
     tag: "142.000 ₫",
     drop: 0.74,
-    glow: "#ffd98a",
     description:
       "Đèn treo thả trần kiểu dáng tinh tế, gom vùng sáng ấm áp cho góc đọc sách và bàn trà.",
     details: [
@@ -125,7 +206,6 @@ export const LAMP_DEMO_ITEMS: PendantLampItem[] = [
     name: "Đèn Nấm",
     tag: "200.000 ₫",
     drop: 1,
-    glow: "#ffd88a",
     description:
       "Đèn mây tre đan thủ công tự nhiên, tạo hiệu ứng ánh sáng đan xen mộc mạc, ấm cúng.",
     details: [
@@ -147,7 +227,6 @@ export const LAMP_DEMO_ITEMS: PendantLampItem[] = [
     name: "Đèn treo thả trần phong cách cổ điển",
     tag: "249.000 ₫",
     drop: 0.68,
-    glow: "#ffe7ad",
     description:
       "Đèn lồng giấy washi tròn phong cách cổ điển, tán sáng vàng ấm dịu nhẹ bảo vệ mắt cho phòng ngủ & bàn trà.",
     details: [
@@ -169,7 +248,6 @@ export const LAMP_DEMO_ITEMS: PendantLampItem[] = [
     name: "Đèn Nấm - Đèn thả trần tre tròn 2 lớp",
     tag: "300.000 ₫",
     drop: 0.86,
-    glow: "#ffe19c",
     description:
       "Đèn thả trần hiện đại, phom chao rộng giúp phân bổ ánh sáng êm dịu.",
     details: [
@@ -191,7 +269,6 @@ export const LAMP_DEMO_ITEMS: PendantLampItem[] = [
     name: "Đèn Cây Đứng Hình Nấm",
     tag: "440.000 ₫",
     drop: 0.8,
-    glow: "#ffd384",
     description:
       "Đèn decor chao vòm hình nấm sang trọng, mang lại bầu không khí ấm áp cho góc sofa.",
     details: [
@@ -209,179 +286,1476 @@ export const LAMP_DEMO_ITEMS: PendantLampItem[] = [
   },
 ];
 
-function clamp(v: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, v));
+/* Exact constants & physics from decoho-fe/src/components/ui/pendant-lamp-rail.tsx */
+const ASPECT = 2 / 3;
+const MAX_H = 230;
+const MIN_WIDE_H = 78;
+const CAROUSEL_H = 224;
+const FIT = 1.1;
+const SPREAD = 1.65;
+const SHADE = 0.88;
+const CORD = 0.7;
+const CORD_W = 0.02;
+const SHADE_TOP = 0.32;
+const MOUTH = 0.74;
+const REACH = 0.55;
+const METRES = 0.5;
+const GRAVITY = 9.8;
+const DAMPING = 2;
+const COUPLING = 0.15;
+const MAX_SWING = 14;
+const AMBIENT = 0.12;
+const FADE = 0.1;
+const SWAY = 26;
+const NUDGE = 14;
+const RAD = Math.PI / 180;
+const DEG = 180 / Math.PI;
+
+const METAL_X =
+  "linear-gradient(to right, #b5bcb4, #70796f 55%, #343934)";
+const TRACK_BG =
+  "linear-gradient(to bottom, #cdd3cc 0%, #ffffff 16%, #969f95 36%, #70796f 64%, #383e38 100%)";
+const BRUSHED =
+  "repeating-linear-gradient(90deg, transparent 0 2px, rgba(255,255,255,0.4) 2px 3px, transparent 3px 7px)";
+const CORD_BG =
+  "linear-gradient(to right, #454545, #4f4f4f 10%, #4f4f4f 20%, #464646 30%, #333333 40%, #252525 50%, #262626 60%, #303030 70%, #3b3b3b 80%, #3d3d3d 90%, #3b3b3b)";
+const POOL_BG =
+  "radial-gradient(closest-side, color-mix(in oklab, var(--lamp-glow, #ffd98a) 88%, transparent), color-mix(in oklab, var(--lamp-glow, #ffd98a) 36%, transparent) 48%, transparent)";
+const BEAM_GLOW =
+  "color-mix(in oklab, var(--lamp-glow, #ffd98a) 72%, transparent)";
+
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
 }
 
-function CloudLampGraphic({
-  width,
-  height,
-  lit,
-}: {
+type Geometry = {
+  h: number;
+  w: number;
   width: number;
+  carousel: boolean;
+  track: number;
+  trackTop: number;
+  adapter: number;
+  pivot: number;
+  cords: number[];
+  reach: number[];
+  metres: number[];
+  overlap: boolean[];
+  foot: number;
   height: number;
-  lit: number;
-}) {
-  const cordW = Math.max(2, width * 0.02);
-  const cordH = height * 0.35;
-  const cloudTop = height * 0.31;
-  const cloudW = width * 0.84;
-  const cloudH = height * 0.33;
-  const left = (width - cloudW) / 2;
+  inset: number;
+  min: number;
+  max: number;
+  poolW: number;
+  poolH: number;
+  beamW: number;
+  cordW: number;
+};
 
-  const puffs = [
-    { x: 0.05, y: 0.28, w: 0.45, h: 0.56 },
-    { x: 0.5, y: 0.28, w: 0.45, h: 0.56 },
-    { x: 0.17, y: 0.08, w: 0.43, h: 0.56 },
-    { x: 0.4, y: 0.08, w: 0.43, h: 0.56 },
-    { x: 0.29, y: 0.0, w: 0.42, h: 0.52 },
-    { x: 0.07, y: 0.24, w: 0.86, h: 0.62 },
-  ];
+function geometry(
+  h: number,
+  width: number,
+  carousel: boolean,
+  drops: number[],
+): Geometry {
+  const w = h * ASPECT;
+  const track = Math.round(clamp(h * 0.05, 6, 12));
+  const trackTop = 8;
+  const adapter = Math.round(clamp(h * 0.075, 8, 17));
+  const pivot = trackTop + Math.round(track * 0.6) + adapter;
+  const cords = drops.map((drop) => Math.round(h * CORD * drop));
+  const reach = cords.map((cord) => cord + h * REACH);
+  const metres = reach.map((r) => (r / h) * METRES);
+  const overlap = cords.map(
+    (cord, i) =>
+      i < cords.length - 1 &&
+      Math.abs(cord - (cords[i + 1] ?? 0)) < h * (MOUTH - SHADE_TOP),
+  );
+  const lowest = Math.max(0, ...cords) + h * 0.8;
+  const inset = 0;
+  const foot = w * SHADE;
+  return {
+    h,
+    w,
+    width,
+    carousel,
+    track,
+    trackTop,
+    adapter,
+    pivot,
+    cords,
+    reach,
+    metres,
+    overlap,
+    foot,
+    height: Math.round(pivot + lowest + h * 0.12),
+    inset,
+    min: inset + foot / 2,
+    max: width - inset - foot / 2,
+    poolW: w * 2.4,
+    poolH: h * 0.95,
+    beamW: w * 3,
+    cordW: Math.max(1.2, w * CORD_W),
+  };
+}
+
+function restTargets(
+  g: Geometry,
+  count: number,
+  front: number | null,
+  swipe: number,
+) {
+  if (g.carousel) {
+    const gap = g.w * 1.08;
+    const centre = front ?? 0;
+    return Array.from(
+      { length: count },
+      (_, i) => g.width / 2 + (i - centre) * gap + swipe,
+    );
+  }
+  const edge = Math.max(16, g.w * 0.3);
+  const spacing = clamp(
+    (g.width - edge * 2) / Math.max(1, count),
+    g.foot * 1.04,
+    g.w * SPREAD,
+  );
+  const start = (g.width - spacing * count) / 2 + spacing / 2;
+  return Array.from({ length: count }, (_, i) => start + i * spacing);
+}
+
+type Sim = {
+  x: number[];
+  vx: number[];
+  pv: number[];
+  tx: number[];
+  swing: number[];
+  vswing: number[];
+  lit: number[];
+  tlit: number[];
+  drag: number;
+  dragX: number;
+  grab: number;
+  free: number;
+  last: number;
+  raf: number;
+};
+
+function emptySim(): Sim {
+  return {
+    x: [],
+    vx: [],
+    pv: [],
+    tx: [],
+    swing: [],
+    vswing: [],
+    lit: [],
+    tlit: [],
+    drag: -1,
+    dragX: 0,
+    grab: 0,
+    free: 0,
+    last: 0,
+    raf: 0,
+  };
+}
+
+function constrain(s: Sim, n: number, gap: number, min: number, max: number) {
+  const anchor = s.drag;
+  for (let pass = 0; pass < 2; pass++) {
+    for (let i = 0; i < n - 1; i++) {
+      const a = s.x[i] ?? 0;
+      const b = s.x[i + 1] ?? 0;
+      const overlap = gap - (b - a);
+      if (overlap <= 0) continue;
+      if (i === anchor) s.x[i + 1] = b + overlap;
+      else if (i + 1 === anchor) s.x[i] = a - overlap;
+      else {
+        s.x[i] = a - overlap / 2;
+        s.x[i + 1] = b + overlap / 2;
+      }
+      const va = s.vx[i] ?? 0;
+      const vb = s.vx[i + 1] ?? 0;
+      if (va > vb) {
+        const shared = (va + vb) / 2;
+        if (i !== anchor) s.vx[i] = shared;
+        if (i + 1 !== anchor) s.vx[i + 1] = shared;
+      }
+    }
+  }
+  if ((s.x[n - 1] ?? 0) > max) {
+    s.x[n - 1] = max;
+    s.vx[n - 1] = -Math.abs(s.vx[n - 1] ?? 0) * 0.3;
+  }
+  for (let i = n - 2; i >= 0; i--) {
+    const limit = (s.x[i + 1] ?? 0) - gap;
+    if ((s.x[i] ?? 0) > limit) {
+      s.x[i] = limit;
+      s.vx[i] = Math.min(s.vx[i] ?? 0, s.vx[i + 1] ?? 0);
+    }
+  }
+  if ((s.x[0] ?? 0) < min) {
+    s.x[0] = min;
+    s.vx[0] = Math.abs(s.vx[0] ?? 0) * 0.3;
+  }
+  for (let i = 1; i < n; i++) {
+    const limit = (s.x[i - 1] ?? 0) + gap;
+    if ((s.x[i] ?? 0) < limit) {
+      s.x[i] = limit;
+      s.vx[i] = Math.max(s.vx[i] ?? 0, s.vx[i - 1] ?? 0);
+    }
+  }
+}
+
+function knock(s: Sim, n: number, g: Geometry) {
+  for (let i = 0; i < n - 1; i++) {
+    if (!g.overlap[i]) continue;
+    const li = g.reach[i] ?? 1;
+    const lj = g.reach[i + 1] ?? 1;
+    const ai = (s.swing[i] ?? 0) * RAD;
+    const aj = (s.swing[i + 1] ?? 0) * RAD;
+    const xi = (s.x[i] ?? 0) - li * Math.sin(ai);
+    const xj = (s.x[i + 1] ?? 0) - lj * Math.sin(aj);
+    const pen = g.foot - (xj - xi);
+    if (pen <= 0) continue;
+    s.swing[i] = clamp(
+      (s.swing[i] ?? 0) + (pen / 2 / li) * DEG,
+      -MAX_SWING,
+      MAX_SWING,
+    );
+    s.swing[i + 1] = clamp(
+      (s.swing[i + 1] ?? 0) - (pen / 2 / lj) * DEG,
+      -MAX_SWING,
+      MAX_SWING,
+    );
+    const ui =
+      (s.vx[i] ?? 0) - li * Math.cos(ai) * (s.vswing[i] ?? 0) * RAD;
+    const uj =
+      (s.vx[i + 1] ?? 0) - lj * Math.cos(aj) * (s.vswing[i + 1] ?? 0) * RAD;
+    if (ui > uj) {
+      const d = (1.35 * (ui - uj)) / 2;
+      s.vswing[i] = (s.vswing[i] ?? 0) + (d / (li * Math.cos(ai))) * DEG;
+      s.vswing[i + 1] =
+        (s.vswing[i + 1] ?? 0) - (d / (lj * Math.cos(aj))) * DEG;
+    }
+  }
+}
+
+/**
+ * 100% Exact Web DOM PendantLampRail (used when Platform.OS === "web")
+ */
+function WebPendantLampRail({
+  items,
+  dims,
+  onOpenLamp,
+}: {
+  items: PendantLamp[];
+  dims: number[];
+  onOpenLamp: (index: number) => void;
+}) {
+  const count = items.length;
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const slots = useRef<(HTMLButtonElement | null)[]>([]);
+  const pendulums = useRef<(HTMLSpanElement | null)[]>([]);
+  const photos = useRef<(HTMLSpanElement | null)[]>([]);
+  const pools = useRef<(HTMLSpanElement | null)[]>([]);
+  const beams = useRef<(HTMLSpanElement | null)[]>([]);
+  const sim = useRef(emptySim());
+  const [size, setSize] = useState({ width: 0, h: 150, carousel: false });
+  const [innerActive, setInnerActive] = useState<number | null>(null);
+  const [focusIndex, setFocusIndex] = useState(0);
+  const [playing, setPlaying] = useState(true);
+  const pendingOpen = useRef(-1);
+  const pointer = useRef({
+    id: -1,
+    index: -1,
+    x: 0,
+    y: 0,
+    moved: false,
+    kind: "",
+    swipe: 0,
+    lastX: 0,
+    lastT: 0,
+    v: 0,
+  });
+  const hover = useRef({ x: 0, t: 0, v: 0 });
+
+  const active =
+    innerActive !== null && innerActive >= 0 && innerActive < count
+      ? innerActive
+      : null;
+  const drops = useMemo(
+    () => items.map((item) => clamp(item.drop ?? 0.75, 0.3, 1.2)),
+    [items],
+  );
+  const geo = useMemo(
+    () => geometry(size.h, size.width, size.carousel, drops),
+    [size, drops],
+  );
+  const live = useRef({
+    active: null as number | null,
+    geo,
+    count,
+    carouselIndex: 0,
+  });
+  live.current = { ...live.current, active, geo, count };
+
+  const front = size.carousel ? (active ?? live.current.carouselIndex) : null;
+  const litIndex = active ?? front;
+
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const measure = (width: number) => {
+      const fit = (width - 32) / (Math.max(1, count) * ASPECT * FIT);
+      const carousel = count > 1 && fit < MIN_WIDE_H;
+      const h =
+        Math.round(
+          (carousel
+            ? Math.min(CAROUSEL_H, Math.max(170, width * 0.56))
+            : Math.min(MAX_H, Math.max(60, fit))) * 10,
+        ) / 10;
+      setSize((old) =>
+        Math.abs(old.width - width) < 0.5 &&
+        old.carousel === carousel &&
+        Math.abs(old.h - h) < 0.5
+          ? old
+          : { width, h, carousel },
+      );
+    };
+    measure(stage.clientWidth || window.innerWidth);
+    const observer = new ResizeObserver((entries) => {
+      const box = entries[0];
+      if (box) measure(box.contentRect.width);
+    });
+    observer.observe(stage);
+    return () => observer.disconnect();
+  }, [count]);
+
+  const painted = useRef<string[][]>([]);
+  useEffect(() => {
+    painted.current = [];
+  });
+
+  const paint = React.useCallback((i: number) => {
+    const s = sim.current;
+    const g = live.current.geo;
+    const slot = slots.current[i];
+    if (!slot) return;
+    const x = s.x[i] ?? 0;
+    const swing = s.swing[i] ?? 0;
+    const lit = (s.lit[i] ?? AMBIENT).toFixed(3);
+    const a = swing * RAD;
+    const reach = (g.cords[i] ?? 0) + g.h * (MOUTH + 0.04);
+    const spill = 0.1 * Math.max(s.lit[i - 1] ?? 0, s.lit[i + 1] ?? 0);
+    const memo = painted.current[i] ?? (painted.current[i] = []);
+    const put = (
+      k: number,
+      el: HTMLElement | null | undefined,
+      prop: string,
+      value: string,
+    ) => {
+      if (!el || memo[k] === value) return;
+      memo[k] = value;
+      el.style.setProperty(prop, value);
+    };
+    const beam = beams.current[i];
+    const pool = pools.current[i];
+    put(
+      0,
+      slot,
+      "transform",
+      `translate3d(${(x - g.w / 2).toFixed(2)}px,0,0)`,
+    );
+    put(1, slot, "--lit", lit);
+    put(
+      2,
+      pendulums.current[i],
+      "transform",
+      `rotate(${swing.toFixed(3)}deg)`,
+    );
+    put(
+      3,
+      beam,
+      "transform",
+      `translate3d(${(x - g.beamW / 2).toFixed(2)}px,0,0) rotate(${swing.toFixed(3)}deg)`,
+    );
+    put(4, beam, "--lit", lit);
+    put(
+      5,
+      pool,
+      "transform",
+      `translate3d(${(x - Math.sin(a) * reach - g.poolW / 2).toFixed(1)}px,${(g.pivot + Math.cos(a) * reach - g.poolH / 2).toFixed(1)}px,0) rotate(${(swing * 0.5).toFixed(2)}deg)`,
+    );
+    put(6, pool, "--lit", lit);
+    put(7, pool, "--pool", Math.min(1, (s.lit[i] ?? 0) + spill).toFixed(3));
+  }, []);
+
+  const step = React.useCallback(
+    (now: number) => {
+      const s = sim.current;
+      const { count: n, geo: g } = live.current;
+      const dt = s.last ? Math.min(0.05, (now - s.last) / 1000) : 1 / 60;
+      s.last = now;
+      const fade = 1 - Math.exp(-dt / FADE);
+      for (let i = 0; i < n; i++)
+        s.lit[i] =
+          (s.lit[i] ?? 0) + ((s.tlit[i] ?? 0) - (s.lit[i] ?? 0)) * fade;
+      const sub = Math.max(3, Math.ceil(dt / 0.011));
+      const h = dt / sub;
+      const couple = (COUPLING * METRES * DEG) / Math.max(1, g.h);
+      const restoring = now > s.free;
+      for (let k = 0; k < sub; k++) {
+        for (let i = 0; i < n; i++) {
+          const v = s.vx[i] ?? 0;
+          s.pv[i] = v;
+          if (i === s.drag)
+            s.vx[i] = v + (-900 * ((s.x[i] ?? 0) - s.dragX) - 60 * v) * h;
+          else if (restoring)
+            s.vx[i] =
+              v +
+              (-130 * ((s.x[i] ?? 0) - (s.tx[i] ?? 0)) -
+                2 * Math.sqrt(130) * 0.86 * v) *
+                h;
+          else s.vx[i] = v * Math.exp(-6 * h);
+          s.x[i] = (s.x[i] ?? 0) + (s.vx[i] ?? 0) * h;
+        }
+        if (!g.carousel && n > 0) constrain(s, n, g.foot, g.min, g.max);
+        for (let i = 0; i < n; i++) {
+          const accel = clamp(
+            ((s.vx[i] ?? 0) - (s.pv[i] ?? 0)) / h,
+            -12000,
+            12000,
+          );
+          const metres = g.metres[i] ?? 0.6;
+          const sa =
+            -(GRAVITY / metres) * (s.swing[i] ?? 0) -
+            DAMPING * (s.vswing[i] ?? 0) +
+            (accel * couple) / metres;
+          s.vswing[i] = (s.vswing[i] ?? 0) + sa * h;
+          const next = (s.swing[i] ?? 0) + (s.vswing[i] ?? 0) * h;
+          if (Math.abs(next) > MAX_SWING) {
+            s.swing[i] = Math.sign(next) * MAX_SWING;
+            s.vswing[i] = -(s.vswing[i] ?? 0) * 0.2;
+          } else s.swing[i] = next;
+        }
+        knock(s, n, g);
+      }
+      let busy = s.drag >= 0 || now < s.free;
+      for (let i = 0; i < n; i++) {
+        paint(i);
+        if (busy) continue;
+        if (
+          Math.abs(s.vx[i] ?? 0) > 0.5 ||
+          Math.abs((s.x[i] ?? 0) - (s.tx[i] ?? 0)) > 0.25 ||
+          Math.abs(s.swing[i] ?? 0) > 0.02 ||
+          Math.abs(s.vswing[i] ?? 0) > 0.05 ||
+          Math.abs((s.lit[i] ?? 0) - (s.tlit[i] ?? 0)) > 0.002
+        )
+          busy = true;
+      }
+      if (busy) {
+        s.raf = requestAnimationFrame(step);
+        return;
+      }
+      s.raf = 0;
+      s.last = 0;
+      for (let i = 0; i < n; i++) {
+        s.x[i] = s.tx[i] ?? 0;
+        s.vx[i] = 0;
+        s.swing[i] = 0;
+        s.vswing[i] = 0;
+        s.lit[i] = s.tlit[i] ?? 0;
+        paint(i);
+      }
+    },
+    [paint],
+  );
+
+  const kick = React.useCallback(() => {
+    const s = sim.current;
+    if (!s.raf) {
+      s.last = 0;
+      s.raf = requestAnimationFrame(step);
+    }
+  }, [step]);
+
+  const impulse = React.useCallback(
+    (i: number, amount: number) => {
+      const s = sim.current;
+      if (i < 0 || i >= live.current.count) return;
+      s.vswing[i] = (s.vswing[i] ?? 0) + amount;
+      kick();
+    },
+    [kick],
+  );
+
+  useEffect(() => {
+    if (!size.width) return;
+    const s = sim.current;
+    const xs = restTargets(
+      geo,
+      count,
+      front,
+      size.carousel ? pointer.current.swipe : 0,
+    );
+    const fresh = s.x.length !== count;
+    for (let i = 0; i < count; i++) {
+      s.tx[i] = xs[i] ?? 0;
+      if (fresh) {
+        s.x[i] = s.tx[i] ?? 0;
+        s.vx[i] = 0;
+        s.swing[i] = s.swing[i] ?? 0;
+        s.vswing[i] = s.vswing[i] ?? 0;
+      }
+    }
+    for (const list of [s.x, s.vx, s.pv, s.tx, s.swing, s.vswing])
+      list.length = count;
+    for (let i = 0; i < count; i++) paint(i);
+    kick();
+  }, [size.width, size.carousel, geo, count, front, paint, kick]);
+
+  useEffect(() => {
+    const s = sim.current;
+    for (let i = 0; i < count; i++) {
+      s.tlit[i] = (i === litIndex ? 1 : AMBIENT) * (dims[i] ?? 1);
+      if (s.lit[i] === undefined) s.lit[i] = s.tlit[i] ?? AMBIENT;
+    }
+    s.lit.length = count;
+    s.tlit.length = count;
+    for (let i = 0; i < count; i++) paint(i);
+    kick();
+  }, [litIndex, dims, count, paint, kick]);
+
+  const swayed = useRef(false);
+  useEffect(() => {
+    if (!size.width || swayed.current || count === 0) return;
+    const timers = items.map((_, i) =>
+      window.setTimeout(() => {
+        swayed.current = true;
+        impulse(i, -SWAY);
+      }, 90 + i * 70),
+    );
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [size.width, items, count, impulse]);
+
+  useEffect(
+    () => () => {
+      cancelAnimationFrame(sim.current.raf);
+      sim.current.raf = 0;
+    },
+    [],
+  );
+
+  const choose = React.useCallback(
+    (index: number | null, brush = 0) => {
+      if (live.current.active === index) return;
+      live.current.active = index;
+      if (index !== null) {
+        impulse(index - 1, NUDGE);
+        impulse(index + 1, -NUDGE);
+        if (brush) impulse(index, brush);
+        live.current.carouselIndex = index;
+      }
+      setInnerActive(index);
+    },
+    [impulse],
+  );
+
+  const stop = React.useCallback(() => setPlaying(false), []);
+
+  useEffect(() => {
+    if (!playing || count === 0 || !size.width) return;
+    let timer = window.setTimeout(
+      function advance() {
+        const now = live.current.active;
+        const first = live.current.geo.carousel
+          ? Math.min(live.current.count - 1, live.current.carouselIndex + 1)
+          : 0;
+        choose(now === null ? first : (now + 1) % live.current.count);
+        timer = window.setTimeout(advance, 2600);
+      },
+      active === null ? 1100 : 2600,
+    );
+    return () => window.clearTimeout(timer);
+  }, [playing, count, size.width, choose, active]);
+
+  function nearest(clientX: number, clientY: number) {
+    const stage = stageRef.current;
+    if (!stage) return null;
+    const box = stage.getBoundingClientRect();
+    const x = clientX - box.left;
+    const y = clientY - box.top;
+    const g = live.current.geo;
+    if (y < 0 || y > g.height + 24) return null;
+    const s = sim.current;
+    let best = null as number | null;
+    let distance = Infinity;
+    let held = Infinity;
+    for (let i = 0; i < live.current.count; i++) {
+      const tip =
+        (s.x[i] ?? 0) - Math.sin((s.swing[i] ?? 0) * RAD) * (g.reach[i] ?? 0);
+      const d = Math.abs(x - tip);
+      if (i === live.current.active) held = d;
+      if (d < g.w * 0.7 && d < distance) {
+        best = i;
+        distance = d;
+      }
+    }
+    if (
+      best !== null &&
+      best !== live.current.active &&
+      held < g.w * 0.7 &&
+      distance + 8 > held
+    )
+      return live.current.active;
+    return best;
+  }
+
+  const onPointerMove = (event: React.PointerEvent) => {
+    const p = pointer.current;
+    const s = sim.current;
+    const stage = stageRef.current;
+    const now = performance.now();
+    if (p.id === event.pointerId && stage) {
+      const dx = event.clientX - p.x;
+      if (
+        !p.moved &&
+        Math.abs(dx) > 6 &&
+        Math.abs(dx) > Math.abs(event.clientY - p.y)
+      ) {
+        p.moved = true;
+        stop();
+        if (stage.isConnected) stage.setPointerCapture(event.pointerId);
+        if (!live.current.geo.carousel && p.index >= 0) {
+          s.drag = p.index;
+          s.grab =
+            event.clientX -
+            stage.getBoundingClientRect().left -
+            (s.x[p.index] ?? 0);
+        }
+      }
+      if (p.moved) {
+        const v = (event.clientX - p.lastX) / Math.max(1, now - p.lastT);
+        p.v = p.v * 0.6 + v * 0.4;
+        p.lastX = event.clientX;
+        p.lastT = now;
+        if (s.drag >= 0) {
+          s.dragX =
+            event.clientX - stage.getBoundingClientRect().left - s.grab;
+          s.free = now + 900;
+          kick();
+        } else if (live.current.geo.carousel) {
+          p.swipe = dx;
+          const xs = restTargets(
+            live.current.geo,
+            live.current.count,
+            live.current.active ?? live.current.carouselIndex,
+            dx,
+          );
+          for (let i = 0; i < live.current.count; i++) s.tx[i] = xs[i] ?? 0;
+          kick();
+        }
+      }
+      return;
+    }
+    const last = hover.current;
+    const v = last.t ? (event.clientX - last.x) / Math.max(1, now - last.t) : 0;
+    hover.current = { x: event.clientX, t: now, v: last.v * 0.5 + v * 0.5 };
+    if (event.pointerType !== "mouse" || live.current.geo.carousel) return;
+    const hit = nearest(event.clientX, event.clientY);
+    if (hit !== null && hit !== live.current.active) {
+      stop();
+      choose(hit, clamp(-hover.current.v * 16, -22, 22));
+    }
+  };
+
+  const onPointerDown = (event: React.PointerEvent) => {
+    if (event.button !== 0) return;
+    const hit = nearest(event.clientX, event.clientY);
+    const now = performance.now();
+    pendingOpen.current = -1;
+    pointer.current = {
+      id: event.pointerId,
+      index: hit ?? -1,
+      x: event.clientX,
+      y: event.clientY,
+      moved: false,
+      kind: event.pointerType,
+      swipe: 0,
+      lastX: event.clientX,
+      lastT: now,
+      v: 0,
+    };
+  };
+
+  const finishPointer = (event: React.PointerEvent, cancelled: boolean) => {
+    const p = pointer.current;
+    if (p.id !== event.pointerId) return;
+    const s = sim.current;
+    const stage = stageRef.current;
+    if (stage?.hasPointerCapture(event.pointerId))
+      stage.releasePointerCapture(event.pointerId);
+    pointer.current = { ...p, id: -1 };
+    const now = performance.now();
+    if (s.drag >= 0) {
+      s.vx[s.drag] =
+        now - p.lastT > 90 ? 0 : clamp(p.v * 1000, -2500, 2500);
+      s.drag = -1;
+      s.free = now + 350;
+      kick();
+      return;
+    }
+    if (p.moved && live.current.geo.carousel) {
+      const dx = event.clientX - p.x;
+      const from = live.current.active ?? live.current.carouselIndex;
+      const shift =
+        Math.abs(dx) > 40 || Math.abs(p.v) > 0.45 ? (dx < 0 ? 1 : -1) : 0;
+      pointer.current.swipe = 0;
+      const next = clamp(from + shift, 0, live.current.count - 1);
+      if (next === from) {
+        const xs = restTargets(
+          live.current.geo,
+          live.current.count,
+          from,
+          0,
+        );
+        for (let i = 0; i < live.current.count; i++) s.tx[i] = xs[i] ?? 0;
+        kick();
+      }
+      choose(next);
+      return;
+    }
+    if (cancelled || p.moved || p.index < 0) return;
+    stop();
+    if (p.kind !== "mouse" && live.current.active !== p.index) choose(p.index);
+    else pendingOpen.current = p.index;
+  };
+
+  const trackLeft = geo.carousel ? -4 : geo.inset;
+  const carouselIndex = size.carousel ? front : null;
+  const adapterW = Math.round(clamp(geo.w * 0.2, 12, 28));
 
   return (
-    <View style={{ width, height }} pointerEvents="none">
-      <View
+    <section
+      style={{
+        position: "relative",
+        isolation: "isolate",
+        width: "100%",
+        overflow: "hidden",
+        backgroundColor: "#f8f6f0",
+        paddingBottom: 12,
+        ["--lamp-glow" as string]: "#ffdb8c",
+        ["--lamp-accent" as string]: "#2f6f5e",
+        ["--pool-k" as string]: "0.85",
+        ["--beam-k" as string]: "0.42",
+        ["--bloom-k" as string]: "0.22",
+        ["--shadow-k" as string]: "0.13",
+      }}
+      onPointerLeave={(event) => {
+        if (
+          event.pointerType === "mouse" &&
+          pointer.current.id < 0 &&
+          !size.carousel
+        )
+          choose(null);
+      }}
+    >
+      <div
+        ref={stageRef}
         style={{
-          position: "absolute",
-          top: 0,
-          left: (width - cordW) / 2,
-          width: cordW,
-          height: cordH,
-          backgroundColor: "#262626",
+          position: "relative",
+          marginTop: 12,
+          width: "100%",
+          height: geo.height,
+          overflowX: "clip",
+          userSelect: "none",
+          touchAction: "pan-y",
         }}
-      />
-      <View
-        style={{
-          position: "absolute",
-          top: cloudTop,
-          left,
-          width: cloudW,
-          height: cloudH,
-        }}
+        onPointerMove={onPointerMove}
+        onPointerDown={onPointerDown}
+        onPointerUp={(event) => finishPointer(event, false)}
+        onPointerCancel={(event) => finishPointer(event, true)}
       >
-        <View
+        {/* Beams & Glow Pools */}
+        <div
+          aria-hidden="true"
           style={{
+            pointerEvents: "none",
             position: "absolute",
-            left: cloudW * 0.08,
-            top: cloudH * 0.42,
-            width: cloudW * 0.84,
-            height: cloudH * 0.54,
-            borderRadius: cloudH,
-            backgroundColor: lit > 0.35 ? "#f59e0b" : "#94a3b8",
-            opacity: 0.32,
+            inset: 0,
+            zIndex: 0,
+            visibility: size.width ? undefined : "hidden",
           }}
-        />
-        {puffs.map((p, idx) => (
-          <View
-            key={`off-${idx}`}
+        >
+          {items.map((item, i) => {
+            const cord = geo.cords[i] ?? 0;
+            const apex = cord + geo.h * 0.3;
+            return (
+              <React.Fragment key={item.id}>
+                <span
+                  ref={(node) => {
+                    beams.current[i] = node;
+                  }}
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    top: geo.pivot,
+                    width: geo.beamW,
+                    height: cord + geo.h * 1.5,
+                    transformOrigin: "50% 0",
+                    opacity: "calc(var(--lit, 0) * var(--beam-k))",
+                    background: `conic-gradient(from 140deg at 50% ${apex.toFixed(1)}px, transparent 0deg, ${BEAM_GLOW} 24deg, ${BEAM_GLOW} 56deg, transparent 80deg)`,
+                    WebkitMaskImage: `linear-gradient(to bottom, transparent ${(cord + geo.h * (MOUTH - 0.04)).toFixed(1)}px, black ${(cord + geo.h * (MOUTH + 0.14)).toFixed(1)}px, black ${(cord + geo.h * 0.98).toFixed(1)}px, transparent)`,
+                    maskImage: `linear-gradient(to bottom, transparent ${(cord + geo.h * (MOUTH - 0.04)).toFixed(1)}px, black ${(cord + geo.h * (MOUTH + 0.14)).toFixed(1)}px, black ${(cord + geo.h * 0.98).toFixed(1)}px, transparent)`,
+                    ["--lamp-glow" as string]: item.glow ?? "#ffdb8c",
+                  }}
+                />
+                <span
+                  ref={(node) => {
+                    pools.current[i] = node;
+                  }}
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    top: 0,
+                    borderRadius: "9999px",
+                    width: geo.poolW,
+                    height: geo.poolH,
+                    opacity: "calc(var(--pool, 0) * var(--pool-k))",
+                    background: POOL_BG,
+                    ["--lamp-glow" as string]: item.glow ?? "#ffdb8c",
+                  }}
+                />
+              </React.Fragment>
+            );
+          })}
+        </div>
+
+        {/* Track */}
+        <div
+          aria-hidden="true"
+          style={{
+            pointerEvents: "none",
+            position: "absolute",
+            zIndex: 1,
+            left: trackLeft,
+            right: trackLeft,
+            top: geo.trackTop,
+            height: geo.track,
+            visibility: size.width ? undefined : "hidden",
+          }}
+        >
+          <div
             style={{
               position: "absolute",
-              left: cloudW * p.x,
-              top: cloudH * p.y,
-              width: cloudW * p.w,
-              height: cloudH * p.h,
-              borderRadius: cloudW,
-              backgroundColor: idx === puffs.length - 1 ? "#f8fafc" : "#f1f5f9",
-              borderWidth: 0.5,
-              borderColor: "rgba(203,213,225,0.5)",
+              left: 0,
+              right: 0,
+              top: geo.track + 1,
+              height: 12,
+              borderRadius: 9999,
+              backgroundColor: "rgba(0,0,0,0.1)",
+              filter: "blur(5px)",
             }}
           />
-        ))}
-        <View style={[StyleSheet.absoluteFill, { opacity: lit }]}>
-          {puffs.map((p, idx) => (
-            <View
-              key={`on-${idx}`}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              borderRadius: 3,
+              background: TRACK_BG,
+              boxShadow: "0 1px 0 rgba(0,0,0,0.18)",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              borderRadius: 3,
+              opacity: 0.4,
+              background: BRUSHED,
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              left: 4,
+              right: 4,
+              bottom: "18%",
+              height: 1,
+              backgroundColor: "rgba(0,0,0,0.4)",
+            }}
+          />
+          {!geo.carousel &&
+            [0, 1].map((side) => (
+              <div
+                key={side}
+                style={{
+                  position: "absolute",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  borderRadius: 3,
+                  [side ? "right" : "left"]: -2,
+                  width: Math.max(10, geo.track * 1.3),
+                  height: geo.track * 1.9,
+                  background: METAL_X,
+                  boxShadow: "0 3px 6px rgba(0,0,0,0.18)",
+                }}
+              />
+            ))}
+        </div>
+
+        {/* Lamps */}
+        {items.map((item, i) => {
+          const lit = litIndex === i;
+          const cord = geo.cords[i] ?? 0;
+          const mask = `url("${item.image}") top center / contain no-repeat`;
+          return (
+            <button
+              key={item.id}
+              ref={(node) => {
+                slots.current[i] = node;
+              }}
+              type="button"
+              aria-label={item.name}
               style={{
                 position: "absolute",
-                left: cloudW * p.x,
-                top: cloudH * p.y,
-                width: cloudW * p.w,
-                height: cloudH * p.h,
-                borderRadius: cloudW,
+                left: 0,
+                top: geo.pivot - geo.adapter,
+                width: geo.w,
+                height: geo.adapter + cord + geo.h * 0.82,
+                zIndex: lit ? 20 : 10,
+                visibility: !size.width ? "hidden" : undefined,
+                transform: `translate3d(${((sim.current.x[i] ?? 0) - geo.w / 2).toFixed(2)}px,0,0)`,
+                background: "transparent",
+                border: "none",
+                padding: 0,
+                cursor: "pointer",
+                outline: "none",
+                ["--lit" as string]: (sim.current.lit[i] ?? AMBIENT).toFixed(3),
+                ["--lamp-glow" as string]: item.glow ?? "#ffdb8c",
+              }}
+              onFocus={() => {
+                setFocusIndex(i);
+                if (pointer.current.id < 0) {
+                  stop();
+                  choose(i);
+                }
+              }}
+              onClick={(event) => {
+                const pending = pendingOpen.current;
+                pendingOpen.current = -1;
+                if (event.detail === 0 || pending === i) onOpenLamp(i);
+              }}
+            >
+              <span
+                aria-hidden="true"
+                style={{
+                  pointerEvents: "none",
+                  position: "absolute",
+                  left: "50%",
+                  top: 0,
+                  transform: "translateX(-50%)",
+                  borderTopLeftRadius: 2,
+                  borderTopRightRadius: 2,
+                  borderBottomLeftRadius: 4,
+                  borderBottomRightRadius: 4,
+                  width: adapterW,
+                  height: geo.adapter,
+                  background: METAL_X,
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                }}
+              >
+                <span
+                  style={{
+                    position: "absolute",
+                    left: "18%",
+                    right: "18%",
+                    top: "30%",
+                    height: 1,
+                    backgroundColor: "rgba(255,255,255,0.45)",
+                  }}
+                />
+              </span>
+              <span
+                ref={(node) => {
+                  pendulums.current[i] = node;
+                }}
+                style={{
+                  pointerEvents: "none",
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  top: geo.adapter,
+                  transformOrigin: "50% 0",
+                  transform: `rotate(${(sim.current.swing[i] ?? 0).toFixed(3)}deg)`,
+                }}
+              >
+                <span
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    left: "50%",
+                    top: 0,
+                    transform: "translateX(-50%)",
+                    borderBottomLeftRadius: 1,
+                    borderBottomRightRadius: 1,
+                    width: Math.max(3, geo.cordW * 2.4),
+                    height: Math.max(3, geo.adapter * 0.45),
+                    background: METAL_X,
+                  }}
+                />
+                <span
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    overflow: "hidden",
+                    height: cord,
+                  }}
+                >
+                  <span
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      transformOrigin: "top",
+                      background: CORD_BG,
+                      transform: `scaleX(${CORD_W})`,
+                    }}
+                  />
+                </span>
+                <span
+                  ref={(node) => {
+                    photos.current[i] = node;
+                  }}
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    top: cord,
+                    height: geo.h,
+                    ["--bloom-r" as string]: `${(geo.w * 0.08).toFixed(1)}px`,
+                  }}
+                >
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      pointerEvents: "none",
+                      position: "absolute",
+                      inset: 0,
+                      backgroundColor: "#000",
+                      filter: "blur(3px)",
+                      opacity: "var(--shadow-k)",
+                      transform: "translate(5%, 2.5%)",
+                      clipPath: "inset(30% 0 0 0)",
+                      WebkitMask: mask,
+                      mask,
+                    }}
+                  />
+                  {item.imageOn && (
+                    <img
+                      src={item.imageOn}
+                      alt=""
+                      aria-hidden="true"
+                      draggable={false}
+                      style={{
+                        pointerEvents: "none",
+                        position: "absolute",
+                        inset: 0,
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "contain",
+                        objectPosition: "top",
+                        opacity: "calc(var(--lit, 0) * var(--bloom-k))",
+                        filter:
+                          "blur(var(--bloom-r, 10px)) saturate(1.35) brightness(1.1)",
+                      }}
+                    />
+                  )}
+                  <img
+                    src={item.image}
+                    alt=""
+                    draggable={false}
+                    style={{
+                      pointerEvents: "none",
+                      position: "absolute",
+                      inset: 0,
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "contain",
+                      objectPosition: "top",
+                    }}
+                  />
+                  {item.imageOn && (
+                    <img
+                      src={item.imageOn}
+                      alt=""
+                      draggable={false}
+                      style={{
+                        pointerEvents: "none",
+                        position: "absolute",
+                        inset: 0,
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "contain",
+                        objectPosition: "top",
+                        opacity: "var(--lit, 0)",
+                      }}
+                    />
+                  )}
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Pagination Dots */}
+      {size.carousel && count > 1 && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: "relative",
+            zIndex: 10,
+            marginTop: 4,
+            display: "flex",
+            justifyContent: "center",
+            gap: 6,
+          }}
+        >
+          {items.map((item, i) => (
+            <button
+              key={item.id}
+              type="button"
+              tabIndex={-1}
+              onClick={() => {
+                stop();
+                choose(i);
+              }}
+              style={{
+                height: 6,
+                width: carouselIndex === i ? 24 : 6,
+                borderRadius: 9999,
+                border: "none",
+                padding: 0,
+                cursor: "pointer",
+                transition: "width 300ms, background-color 300ms",
                 backgroundColor:
-                  idx === puffs.length - 1 ? "#fffbeb" : "#fef3c7",
+                  carouselIndex === i ? "#2f6f5e" : "rgba(41,61,50,0.25)",
               }}
             />
           ))}
-          <View
-            style={{
-              position: "absolute",
-              left: cloudW * 0.18,
-              top: cloudH * 0.22,
-              width: cloudW * 0.64,
-              height: cloudH * 0.55,
-              borderRadius: cloudW,
-              backgroundColor: "#fde68a",
-              opacity: 0.88,
-            }}
-          />
-        </View>
-      </View>
-    </View>
+        </div>
+      )}
+    </section>
   );
 }
 
-function LampVisual({
-  item,
-  width,
-  height,
-  lit,
-}: {
-  item: PendantLampItem;
-  width: number;
-  height: number;
-  lit: number;
-}) {
-  if (item.id === "cloud-pendant") {
-    return <CloudLampGraphic width={width} height={height} lit={lit} />;
+/**
+ * Self-contained HTML for Android / iOS WebView so native mobile renders the exact same
+ * CSS conic-gradient, radial-gradient, SVG filters, and physics as Web!
+ */
+function buildNativeWebViewHtml(items: PendantLamp[]): string {
+  const serialized = JSON.stringify(items);
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    background: #f8f6f0;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    font-family: system-ui, -apple-system, sans-serif;
   }
-  return (
-    <View style={{ width, height }} pointerEvents="none">
-      {/* Subtle drop shadow of shade */}
-      <Image
-        source={{ uri: item.image }}
-        style={{
-          width,
-          height,
-          position: "absolute",
-          top: 3,
-          left: 4,
-          opacity: 0.14,
-          tintColor: "#000000",
-        }}
-        resizeMode="contain"
-      />
-      <Image
-        source={{ uri: item.image }}
-        style={{ width, height, position: "absolute", top: 0, left: 0 }}
-        resizeMode="contain"
-      />
-      <Image
-        source={{ uri: item.imageOn }}
-        style={{
-          width,
-          height,
-          position: "absolute",
-          top: 0,
-          left: 0,
-          opacity: lit,
-        }}
-        resizeMode="contain"
-      />
-    </View>
-  );
+  #root {
+    position: relative;
+    isolation: isolate;
+    width: 100%;
+    overflow: hidden;
+    background: #f8f6f0;
+    padding-bottom: 10px;
+    --lamp-glow: #ffdb8c;
+    --lamp-accent: #2f6f5e;
+    --pool-k: 0.85;
+    --beam-k: 0.42;
+    --bloom-k: 0.22;
+    --shadow-k: 0.13;
+  }
+  #stage {
+    position: relative;
+    margin-top: 10px;
+    width: 100%;
+    overflow-x: clip;
+    touch-action: pan-y;
+  }
+  #dots {
+    position: relative;
+    z-index: 10;
+    margin-top: 4px;
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+  }
+  .dot {
+    height: 6px;
+    width: 6px;
+    border-radius: 9999px;
+    border: none;
+    padding: 0;
+    background: rgba(41,61,50,0.25);
+    transition: width 300ms, background-color 300ms;
+  }
+  .dot.active {
+    width: 24px;
+    background: #2f6f5e;
+  }
+</style>
+</head>
+<body>
+<div id="root">
+  <div id="stage"></div>
+  <div id="dots"></div>
+</div>
+<script>
+const ITEMS = ${serialized};
+const ASPECT = 2/3, CAROUSEL_H = 224, CORD = 0.7, CORD_W = 0.02, SHADE_TOP = 0.32, MOUTH = 0.74, REACH = 0.55, METRES = 0.5;
+const GRAVITY = 9.8, DAMPING = 2, COUPLING = 0.15, MAX_SWING = 14, AMBIENT = 0.12, FADE = 0.1, RAD = Math.PI/180, DEG = 180/Math.PI;
+const METAL_X = "linear-gradient(to right, #b5bcb4, #70796f 55%, #343934)";
+const TRACK_BG = "linear-gradient(to bottom, #cdd3cc 0%, #ffffff 16%, #969f95 36%, #70796f 64%, #383e38 100%)";
+const BRUSHED = "repeating-linear-gradient(90deg, transparent 0 2px, rgba(255,255,255,0.4) 2px 3px, transparent 3px 7px)";
+const CORD_BG = "linear-gradient(to right, #454545, #4f4f4f 10%, #4f4f4f 20%, #464646 30%, #333333 40%, #252525 50%, #262626 60%, #303030 70%, #3b3b3b 80%, #3d3d3d 90%, #3b3b3b)";
+const POOL_BG = "radial-gradient(closest-side, color-mix(in oklab, var(--lamp-glow, #ffd98a) 88%, transparent), color-mix(in oklab, var(--lamp-glow, #ffd98a) 36%, transparent) 48%, transparent)";
+const BEAM_GLOW = "color-mix(in oklab, var(--lamp-glow, #ffd98a) 72%, transparent)";
+
+function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+const stage = document.getElementById("stage");
+const dotsWrap = document.getElementById("dots");
+const n = ITEMS.length;
+let width = window.innerWidth || 390;
+let h = Math.min(CAROUSEL_H, Math.max(170, width * 0.56));
+let w = h * ASPECT;
+let track = Math.round(clamp(h * 0.05, 6, 12));
+let trackTop = 8;
+let adapter = Math.round(clamp(h * 0.075, 8, 17));
+let pivot = trackTop + Math.round(track * 0.6) + adapter;
+let cords = ITEMS.map(it => Math.round(h * CORD * (it.drop || 0.75)));
+let reach = cords.map(c => c + h * REACH);
+let metres = reach.map(r => (r / h) * METRES);
+let lowest = Math.max(0, ...cords) + h * 0.8;
+let stageH = Math.round(pivot + lowest + h * 0.12);
+let poolW = w * 2.4, poolH = h * 0.95, beamW = w * 3, cordW = Math.max(1.2, w * CORD_W);
+let gap = w * 1.08;
+
+stage.style.height = stageH + "px";
+
+const sim = {
+  x: ITEMS.map((_, i) => width / 2 + i * gap),
+  vx: ITEMS.map(() => 0),
+  pv: ITEMS.map(() => 0),
+  tx: ITEMS.map((_, i) => width / 2 + i * gap),
+  swing: ITEMS.map(() => 0),
+  vswing: ITEMS.map(() => 0),
+  lit: ITEMS.map((_, i) => i === 0 ? 1 : AMBIENT),
+  tlit: ITEMS.map((_, i) => i === 0 ? 1 : AMBIENT),
+  last: 0,
+  raf: 0
+};
+
+let activeIdx = 0;
+let playing = true;
+let swipe = 0;
+
+// Build DOM
+const bgLayer = document.createElement("div");
+bgLayer.style.cssText = "pointer-events:none;position:absolute;inset:0;z-index:0;";
+stage.appendChild(bgLayer);
+
+const trackEl = document.createElement("div");
+trackEl.style.cssText = "pointer-events:none;position:absolute;z-index:1;left:-4px;right:-4px;top:" + trackTop + "px;height:" + track + "px;";
+trackEl.innerHTML =
+  '<div style="position:absolute;left:0;right:0;top:' + (track+1) + 'px;height:12px;border-radius:9999px;background:rgba(0,0,0,0.1);filter:blur(5px)"></div>' +
+  '<div style="position:absolute;inset:0;border-radius:3px;background:' + TRACK_BG + ';box-shadow:0 1px 0 rgba(0,0,0,0.18)"></div>' +
+  '<div style="position:absolute;inset:0;border-radius:3px;opacity:0.4;background:' + BRUSHED + '"></div>' +
+  '<div style="position:absolute;left:4px;right:4px;bottom:18%;height:1px;background:rgba(0,0,0,0.4)"></div>';
+stage.appendChild(trackEl);
+
+const beams = [], pools = [], slots = [], pendulums = [], dotBtns = [];
+const adapterW = Math.round(clamp(w * 0.2, 12, 28));
+
+ITEMS.forEach((item, i) => {
+  const cord = cords[i];
+  const apex = cord + h * 0.3;
+  const beam = document.createElement("span");
+  beam.style.cssText = "position:absolute;left:0;top:" + pivot + "px;width:" + beamW + "px;height:" + (cord + h*1.5) + "px;transform-origin:50% 0;opacity:calc(var(--lit,0)*var(--beam-k));background:conic-gradient(from 140deg at 50% " + apex.toFixed(1) + "px, transparent 0deg, " + BEAM_GLOW + " 24deg, " + BEAM_GLOW + " 56deg, transparent 80deg);-webkit-mask-image:linear-gradient(to bottom, transparent " + (cord + h*(MOUTH-0.04)).toFixed(1) + "px, black " + (cord + h*(MOUTH+0.14)).toFixed(1) + "px, black " + (cord + h*0.98).toFixed(1) + "px, transparent);";
+  beam.style.setProperty("--lamp-glow", item.glow || "#ffdb8c");
+  bgLayer.appendChild(beam);
+  beams.push(beam);
+
+  const pool = document.createElement("span");
+  pool.style.cssText = "position:absolute;left:0;top:0;border-radius:9999px;width:" + poolW + "px;height:" + poolH + "px;opacity:calc(var(--pool,0)*var(--pool-k));background:" + POOL_BG + ";";
+  pool.style.setProperty("--lamp-glow", item.glow || "#ffdb8c");
+  bgLayer.appendChild(pool);
+  pools.push(pool);
+
+  const slot = document.createElement("button");
+  slot.type = "button";
+  slot.style.cssText = "position:absolute;left:0;top:" + (pivot - adapter) + "px;width:" + w + "px;height:" + (adapter + cord + h*0.82) + "px;background:transparent;border:none;padding:0;outline:none;";
+  const mask = 'url("' + item.image + '") top center / contain no-repeat';
+  slot.innerHTML =
+    '<span style="pointer-events:none;position:absolute;left:50%;top:0;transform:translateX(-50%);border-radius:2px 2px 4px 4px;width:' + adapterW + 'px;height:' + adapter + 'px;background:' + METAL_X + ';box-shadow:0 2px 4px rgba(0,0,0,0.2)"><span style="position:absolute;left:18%;right:18%;top:30%;height:1px;background:rgba(255,255,255,0.45)"></span></span>' +
+    '<span class="pend" style="pointer-events:none;position:absolute;left:0;right:0;bottom:0;top:' + adapter + 'px;transform-origin:50% 0">' +
+      '<span style="position:absolute;left:50%;top:0;transform:translateX(-50%);border-radius:0 0 1px 1px;width:' + Math.max(3, cordW*2.4) + 'px;height:' + Math.max(3, adapter*0.45) + 'px;background:' + METAL_X + '"></span>' +
+      '<span style="position:absolute;left:0;right:0;top:0;overflow:hidden;height:' + cord + 'px"><span style="position:absolute;inset:0;transform-origin:top;background:' + CORD_BG + ';transform:scaleX(' + CORD_W + ')"></span></span>' +
+      '<span style="position:absolute;left:0;right:0;top:' + cord + 'px;height:' + h + 'px">' +
+        '<span style="pointer-events:none;position:absolute;inset:0;background:#000;filter:blur(3px);opacity:var(--shadow-k);transform:translate(5%,2.5%);clip-path:inset(30% 0 0 0);-webkit-mask:' + mask + ';mask:' + mask + '"></span>' +
+        '<img src="' + item.image + '" draggable="false" style="pointer-events:none;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:top" />' +
+        '<img src="' + item.imageOn + '" draggable="false" style="pointer-events:none;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:top;opacity:var(--lit,0)" />' +
+      '</span>' +
+    '</span>';
+  stage.appendChild(slot);
+  slots.push(slot);
+  pendulums.push(slot.querySelector(".pend"));
+
+  const dot = document.createElement("button");
+  dot.className = "dot" + (i === 0 ? " active" : "");
+  dot.onclick = () => { playing = false; selectLamp(i); };
+  dotsWrap.appendChild(dot);
+  dotBtns.push(dot);
+});
+
+function updateTargets() {
+  for (let i = 0; i < n; i++) {
+    sim.tx[i] = width / 2 + (i - activeIdx) * gap + swipe;
+    sim.tlit[i] = i === activeIdx ? 1 : AMBIENT;
+    dotBtns[i].className = "dot" + (i === activeIdx ? " active" : "");
+    slots[i].style.zIndex = i === activeIdx ? "20" : "10";
+  }
+  kick();
+}
+
+function selectLamp(idx) {
+  idx = clamp(idx, 0, n - 1);
+  if (activeIdx !== idx) {
+    sim.vswing[Math.max(0, idx - 1)] += 12;
+    sim.vswing[Math.min(n - 1, idx + 1)] -= 12;
+    activeIdx = idx;
+  }
+  updateTargets();
+}
+
+function paint(i) {
+  const x = sim.x[i], sw = sim.swing[i], lit = sim.lit[i].toFixed(3);
+  const a = sw * RAD;
+  const r = cords[i] + h * (MOUTH + 0.04);
+  const spill = 0.1 * Math.max(sim.lit[i-1]||0, sim.lit[i+1]||0);
+  slots[i].style.transform = "translate3d(" + (x - w/2).toFixed(2) + "px,0,0)";
+  slots[i].style.setProperty("--lit", lit);
+  pendulums[i].style.transform = "rotate(" + sw.toFixed(3) + "deg)";
+  beams[i].style.transform = "translate3d(" + (x - beamW/2).toFixed(2) + "px,0,0) rotate(" + sw.toFixed(3) + "deg)";
+  beams[i].style.setProperty("--lit", lit);
+  pools[i].style.transform = "translate3d(" + (x - Math.sin(a)*r - poolW/2).toFixed(1) + "px," + (pivot + Math.cos(a)*r - poolH/2).toFixed(1) + "px,0) rotate(" + (sw*0.5).toFixed(2) + "deg)";
+  pools[i].style.setProperty("--pool", Math.min(1, sim.lit[i] + spill).toFixed(3));
+}
+
+function step(now) {
+  const dt = sim.last ? Math.min(0.05, (now - sim.last) / 1000) : 1/60;
+  sim.last = now;
+  const fade = 1 - Math.exp(-dt / FADE);
+  for (let i = 0; i < n; i++) sim.lit[i] += (sim.tlit[i] - sim.lit[i]) * fade;
+  const sub = Math.max(3, Math.ceil(dt / 0.011));
+  const sh = dt / sub;
+  const couple = (COUPLING * METRES * DEG) / Math.max(1, h);
+  for (let k = 0; k < sub; k++) {
+    for (let i = 0; i < n; i++) {
+      const v = sim.vx[i];
+      sim.pv[i] = v;
+      sim.vx[i] = v + (-130 * (sim.x[i] - sim.tx[i]) - 2 * Math.sqrt(130) * 0.86 * v) * sh;
+      sim.x[i] += sim.vx[i] * sh;
+      const accel = clamp((sim.vx[i] - sim.pv[i]) / sh, -12000, 12000);
+      const m = metres[i] || 0.6;
+      const sa = -(GRAVITY / m) * sim.swing[i] - DAMPING * sim.vswing[i] + (accel * couple) / m;
+      sim.vswing[i] += sa * sh;
+      sim.swing[i] = clamp(sim.swing[i] + sim.vswing[i] * sh, -MAX_SWING, MAX_SWING);
+    }
+  }
+  let busy = false;
+  for (let i = 0; i < n; i++) {
+    paint(i);
+    if (Math.abs(sim.vx[i]) > 0.4 || Math.abs(sim.x[i] - sim.tx[i]) > 0.25 || Math.abs(sim.swing[i]) > 0.03 || Math.abs(sim.lit[i] - sim.tlit[i]) > 0.003) busy = true;
+  }
+  if (busy) sim.raf = requestAnimationFrame(step);
+  else { sim.raf = 0; sim.last = 0; }
+}
+
+function kick() {
+  if (!sim.raf) { sim.last = 0; sim.raf = requestAnimationFrame(step); }
+}
+
+updateTargets();
+setInterval(() => {
+  if (playing) selectLamp((activeIdx + 1) % n);
+}, 2600);
+
+let pStart = 0, pMoved = false, pLastX = 0, pLastT = 0, pVel = 0;
+stage.addEventListener("pointerdown", e => {
+  pStart = e.clientX; pLastX = e.clientX; pLastT = performance.now(); pMoved = false; pVel = 0;
+});
+stage.addEventListener("pointermove", e => {
+  if (!pStart) return;
+  const dx = e.clientX - pStart;
+  if (Math.abs(dx) > 6) {
+    pMoved = true; playing = false;
+    const now = performance.now();
+    pVel = 0.6 * pVel + 0.4 * ((e.clientX - pLastX) / Math.max(1, now - pLastT));
+    pLastX = e.clientX; pLastT = now;
+    swipe = dx;
+    updateTargets();
+  }
+});
+stage.addEventListener("pointerup", e => {
+  if (!pStart) return;
+  const dx = e.clientX - pStart;
+  pStart = 0;
+  swipe = 0;
+  if (pMoved) {
+    const shift = Math.abs(dx) > 36 || Math.abs(pVel) > 0.4 ? (dx < 0 ? 1 : -1) : 0;
+    selectLamp(activeIdx + shift);
+  } else {
+    playing = false;
+    let best = activeIdx, dist = 9999;
+    for (let i = 0; i < n; i++) {
+      const d = Math.abs(e.clientX - sim.x[i]);
+      if (d < dist) { dist = d; best = i; }
+    }
+    if (best !== activeIdx) selectLamp(best);
+    else if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(JSON.stringify({ type: "open", index: activeIdx }));
+  }
+});
+
+window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({ type: "height", height: stageH + 34 }));
+</script>
+</body>
+</html>`;
 }
 
 export function PendantLampRail({ products }: { products?: Product[] }) {
-  const [stageWidth, setStageWidth] = useState(
-    () => Dimensions.get("window").width,
-  );
-  const [activeIndex, setActiveIndex] = useState<number>(4); // Default center on rattan/paper-lantern like web mobile view
   const [openIndex, setOpenIndex] = useState<number | null>(null);
-  const [autoplay, setAutoplay] = useState(true);
   const [dims, setDims] = useState<number[]>(() =>
     LAMP_DEMO_ITEMS.map(() => 1),
   );
+  const [webViewHeight, setWebViewHeight] = useState(() => {
+    const w = Dimensions.get("window").width;
+    const h = Math.min(CAROUSEL_H, Math.max(170, w * 0.56));
+    return Math.round(h * 1.7 + 44);
+  });
 
   const items = useMemo(() => {
     if (!products?.length) return LAMP_DEMO_ITEMS;
@@ -398,410 +1772,46 @@ export function PendantLampRail({ products }: { products?: Product[] }) {
     });
   }, [products]);
 
-  const count = items.length;
-
-  // Match exact Web F12 mobile carousel geometry:
-  // fit = (width - 32) / (count * (2/3) * 1.1) -> carousel when fit < 112 (i.e. width < 690)
-  const fit = (stageWidth - 32) / (Math.max(1, count) * (2 / 3) * 1.1);
-  const isCarousel = count > 1 && fit < 112;
-  const h = Math.round(
-    isCarousel
-      ? Math.min(224, Math.max(175, stageWidth * 0.56))
-      : Math.min(200, Math.max(60, fit)),
-  );
-  const w = Math.round(h * (2 / 3));
-  const trackH = Math.round(clamp(h * 0.05, 6, 12));
-  const trackTop = 8;
-  const adapterH = Math.round(clamp(h * 0.075, 8, 17));
-  const adapterW = Math.round(clamp(w * 0.19, 14, 28));
-  const pivotY = trackTop + Math.round(trackH * 0.6) + adapterH;
-  const cords = useMemo(
-    () => items.map((item) => Math.round(h * 0.7 * item.drop)),
-    [items, h],
-  );
-  const lowest = Math.max(0, ...cords) + h * 0.8;
-  const stageHeight = Math.round(pivotY + lowest + h * 0.12);
-  const gap = w * 1.08;
-  const cordW = Math.max(1.6, w * 0.02);
-
-  // Simulation state for smooth carousel sliding & pendulum swing
-  const simRef = useRef({
-    x: items.map((_, i) => stageWidth / 2 + (i - 4) * (w * 1.08)),
-    vx: items.map(() => 0),
-    swing: items.map(() => 0),
-    vswing: items.map(() => 0),
-    swipe: 0,
-  });
-
-  const [renderState, setRenderState] = useState(() => ({
-    x: items.map((_, i) => stageWidth / 2 + (i - 4) * (w * 1.08)),
-    swing: items.map(() => 0),
-  }));
-
-  const activeRef = useRef(activeIndex);
-  activeRef.current = activeIndex;
-  const geoRef = useRef({ stageWidth, w, h, gap, isCarousel, cords });
-  geoRef.current = { stageWidth, w, h, gap, isCarousel, cords };
-
-  // Re-initialize positions when width changes significantly
-  useEffect(() => {
-    const g = geoRef.current;
-    if (g.isCarousel) {
-      simRef.current.x = items.map(
-        (_, i) => g.stageWidth / 2 + (i - activeRef.current) * g.gap,
-      );
-    } else {
-      const edge = Math.max(16, g.w * 0.3);
-      const spacing = clamp(
-        (g.stageWidth - edge * 2) / count,
-        g.w * 0.88 * 1.04,
-        g.w * 1.42,
-      );
-      const start = (g.stageWidth - spacing * count) / 2 + spacing / 2;
-      simRef.current.x = items.map((_, i) => start + i * spacing);
-    }
-    setRenderState({
-      x: [...simRef.current.x],
-      swing: [...simRef.current.swing],
-    });
-  }, [stageWidth, isCarousel, count]);
-
-  // Autoplay advances carousel lamp every 2.6s just like web
-  useEffect(() => {
-    if (!autoplay || openIndex !== null) return;
-    const id = setInterval(() => {
-      setActiveIndex((prev) => {
-        const next = (prev + 1) % count;
-        simRef.current.vswing[next] = (simRef.current.vswing[next] ?? 0) + 14;
-        return next;
-      });
-    }, 2600);
-    return () => clearInterval(id);
-  }, [autoplay, openIndex, count]);
-
-  // Spring + pendulum animation loop matching web PendantLampRail
-  useEffect(() => {
-    let raf = 0;
-    let last = Date.now();
-    const tick = () => {
-      const now = Date.now();
-      const dt = Math.min(0.032, (now - last) / 1000);
-      last = now;
-      const s = simRef.current;
-      const g = geoRef.current;
-      const centre = activeRef.current;
-
-      let dirty = false;
-      for (let i = 0; i < count; i++) {
-        const targetX = g.isCarousel
-          ? g.stageWidth / 2 + (i - centre) * g.gap + s.swipe
-          : (() => {
-              const edge = Math.max(16, g.w * 0.3);
-              const spacing = clamp(
-                (g.stageWidth - edge * 2) / count,
-                g.w * 0.88 * 1.04,
-                g.w * 1.42,
-              );
-              const start = (g.stageWidth - spacing * count) / 2 + spacing / 2;
-              return start + i * spacing;
-            })();
-
-        const prevX = s.x[i] ?? targetX;
-        const prevVx = s.vx[i] ?? 0;
-
-        // Horizontal spring along track
-        let vx = prevVx + (targetX - prevX) * 65 * dt;
-        vx *= Math.exp(-11 * dt);
-        const nextX = prevX + vx * dt;
-        const ax = (vx - prevVx) / Math.max(0.001, dt);
-
-        // Pendulum swing coupled to track acceleration
-        const cord = g.cords[i] ?? 100;
-        const reach = cord + g.h * 0.55;
-        let swing = s.swing[i] ?? 0;
-        let vswing = s.vswing[i] ?? 0;
-        const omega = 5.4;
-        vswing += (-omega * omega * swing + (ax / reach) * 14) * dt;
-        vswing *= Math.exp(-2.2 * dt);
-        swing = clamp(swing + vswing * dt, -14, 14);
-
-        if (
-          Math.abs(targetX - nextX) > 0.25 ||
-          Math.abs(vx) > 0.25 ||
-          Math.abs(swing) > 0.08 ||
-          Math.abs(vswing) > 0.08
-        ) {
-          dirty = true;
-        } else {
-          swing = 0;
-          vswing = 0;
-        }
-
-        s.x[i] = nextX;
-        s.vx[i] = vx;
-        s.swing[i] = swing;
-        s.vswing[i] = vswing;
-      }
-
-      if (dirty) {
-        setRenderState({
-          x: [...s.x],
-          swing: [...s.swing],
-        });
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [count]);
-
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => false,
-        onMoveShouldSetPanResponder: (_, g) =>
-          Math.abs(g.dx) > 6 && Math.abs(g.dx) > Math.abs(g.dy),
-        onPanResponderGrant: () => {
-          setAutoplay(false);
-        },
-        onPanResponderMove: (_, g) => {
-          simRef.current.swipe = clamp(g.dx * 0.85, -gap * 1.2, gap * 1.2);
-        },
-        onPanResponderRelease: (_, g) => {
-          simRef.current.swipe = 0;
-          const step =
-            g.dx < -28 || g.vx < -0.35 ? 1 : g.dx > 28 || g.vx > 0.35 ? -1 : 0;
-          if (step !== 0) {
-            setActiveIndex((prev) => {
-              const next = clamp(prev + step, 0, count - 1);
-              simRef.current.vswing[next] =
-                (simRef.current.vswing[next] ?? 0) - step * 16;
-              return next;
-            });
-          }
-        },
-        onPanResponderTerminate: () => {
-          simRef.current.swipe = 0;
-        },
-      }),
-    [gap, count],
-  );
-
   const openItem = openIndex !== null ? items[openIndex] : null;
   const openDim = openIndex !== null ? (dims[openIndex] ?? 1) : 1;
-  const activeCenter = renderState.x[activeIndex] ?? stageWidth / 2;
-  const activeCord = cords[activeIndex] ?? 100;
+  const count = items.length;
 
   return (
-    <View
-      onLayout={(e) => {
-        const width = e.nativeEvent.layout.width;
-        if (width > 0 && Math.abs(width - stageWidth) > 1) {
-          setStageWidth(width);
-        }
-      }}
-      style={styles.outerSection}
-    >
-      {/* Interactive Lamp Stage */}
-      <View
-        style={{
-          width: "100%",
-          height: stageHeight,
-          position: "relative",
-          overflow: "hidden",
-        }}
-        {...panResponder.panHandlers}
-      >
-        {/* Warm Radial Glow Pool & Light Cone behind active lamp */}
-        <View
-          pointerEvents="none"
-          style={{
-            position: "absolute",
-            left: activeCenter - w * 1.15,
-            top: pivotY + activeCord + h * 0.16,
-            width: w * 2.3,
-            height: h * 1.05,
-            borderRadius: 999,
-            backgroundColor: items[activeIndex]?.glow ?? "#ffe19a",
-            opacity: 0.34 * (dims[activeIndex] ?? 1),
-          }}
+    <View style={{ width: "100%", backgroundColor: "#f8f6f0" }}>
+      {Platform.OS === "web" ? (
+        <WebPendantLampRail
+          items={items}
+          dims={dims}
+          onOpenLamp={(idx) => setOpenIndex(idx)}
         />
-        <View
-          pointerEvents="none"
-          style={{
-            position: "absolute",
-            left: activeCenter - w * 0.72,
-            top: pivotY + activeCord + h * 0.38,
-            width: w * 1.44,
-            height: h * 0.68,
-            borderRadius: 999,
-            backgroundColor: "#ffefc2",
-            opacity: 0.42 * (dims[activeIndex] ?? 1),
-          }}
-        />
-
-        {/* Horizontal Metallic Track (Edge-to-Edge in Carousel mode, matching web F12 mobile view) */}
-        <View
-          pointerEvents="none"
-          style={[
-            styles.trackBar,
-            {
-              top: trackTop,
-              height: trackH,
-              left: 0,
-              right: 0,
-            },
-          ]}
-        >
-          <LinearGradient
-            colors={["#9ba698", "#6f7b6e", "#3f473f"]}
-            style={StyleSheet.absoluteFill}
-          />
-          <View
-            style={{
-              position: "absolute",
-              left: 0,
-              right: 0,
-              bottom: 1,
-              height: 1,
-              backgroundColor: "rgba(0,0,0,0.35)",
+      ) : (
+        <View style={{ width: "100%", height: webViewHeight }}>
+          <WebView
+            originWhitelist={["*"]}
+            source={{ html: buildNativeWebViewHtml(items) }}
+            scrollEnabled={false}
+            bounces={false}
+            showsHorizontalScrollIndicator={false}
+            showsVerticalScrollIndicator={false}
+            style={{ flex: 1, backgroundColor: "#f8f6f0" }}
+            onMessage={(e) => {
+              try {
+                const msg = JSON.parse(e.nativeEvent.data);
+                if (msg.type === "height" && typeof msg.height === "number") {
+                  setWebViewHeight(msg.height);
+                } else if (
+                  msg.type === "open" &&
+                  typeof msg.index === "number"
+                ) {
+                  setOpenIndex(msg.index);
+                }
+              } catch {}
             }}
           />
         </View>
-
-        {/* Pendant Lamps */}
-        {items.map((item, i) => {
-          const x = renderState.x[i] ?? stageWidth / 2 + (i - activeIndex) * gap;
-          // Skip rendering off-screen lamps far outside viewport
-          if (x < -w * 1.5 || x > stageWidth + w * 1.5) return null;
-
-          const isLit = activeIndex === i;
-          const litVal = isLit ? (dims[i] ?? 1) : 0.12;
-          const cord = cords[i] ?? 100;
-          const swing = renderState.swing[i] ?? 0;
-
-          return (
-            <Pressable
-              key={item.id}
-              accessibilityRole="button"
-              accessibilityLabel={item.name}
-              onPress={() => {
-                setAutoplay(false);
-                if (isCarousel && activeIndex !== i) {
-                  // Tapping a side lamp in carousel slides it to center first, just like web!
-                  setActiveIndex(i);
-                  simRef.current.vswing[i] =
-                    (simRef.current.vswing[i] ?? 0) + 12;
-                } else {
-                  setActiveIndex(i);
-                  setOpenIndex(i);
-                }
-              }}
-              style={{
-                position: "absolute",
-                top: pivotY - adapterH,
-                left: x - w / 2,
-                width: w,
-                height: adapterH + cord + h * 0.84,
-                zIndex: isLit ? 20 : 10,
-                alignItems: "center",
-              }}
-            >
-              {/* Track Adapter Canopy */}
-              <View
-                style={[
-                  styles.adapter,
-                  {
-                    width: adapterW,
-                    height: adapterH,
-                  },
-                ]}
-              >
-                <LinearGradient
-                  colors={["#5d675c", "#8e998c", "#474f46"]}
-                  start={{ x: 0, y: 0.5 }}
-                  end={{ x: 1, y: 0.5 }}
-                  style={[StyleSheet.absoluteFill, { borderRadius: 3 }]}
-                />
-                <View style={styles.adapterHighlight} />
-              </View>
-
-              {/* Swinging Pendulum */}
-              <View
-                style={{
-                  position: "absolute",
-                  top: adapterH,
-                  width: w,
-                  height: cord + h,
-                  alignItems: "center",
-                  transform: [{ rotate: `${swing.toFixed(2)}deg` }],
-                }}
-              >
-                {/* Metal collar under adapter */}
-                <View
-                  style={{
-                    width: Math.max(4, cordW * 2.2),
-                    height: Math.max(3, adapterH * 0.35),
-                    backgroundColor: "#4f584e",
-                    borderBottomLeftRadius: 1,
-                    borderBottomRightRadius: 1,
-                  }}
-                />
-
-                {/* Cord */}
-                <View
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    width: cordW,
-                    height: cord + 2,
-                    backgroundColor: "#262626",
-                  }}
-                />
-
-                {/* Lamp Shade Photo */}
-                <View
-                  style={{
-                    position: "absolute",
-                    top: cord,
-                    width: w,
-                    height: h,
-                  }}
-                >
-                  <LampVisual item={item} width={w} height={h} lit={litVal} />
-                </View>
-              </View>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      {/* Carousel Pagination Dots (exact match with web F12 mobile view) */}
-      {isCarousel && count > 1 && (
-        <View style={styles.dotsRow}>
-          {items.map((item, i) => {
-            const selected = activeIndex === i;
-            return (
-              <Pressable
-                key={item.id}
-                hitSlop={6}
-                onPress={() => {
-                  setAutoplay(false);
-                  setActiveIndex(i);
-                  simRef.current.vswing[i] =
-                    (simRef.current.vswing[i] ?? 0) + 12;
-                }}
-                style={[
-                  styles.dot,
-                  selected ? styles.dotActive : styles.dotInactive,
-                ]}
-              />
-            );
-          })}
-        </View>
       )}
 
-      {/* Detail & Dimmer Modal when tapping the active center lamp */}
+      {/* Detail & Dimmer Modal */}
       <Modal
         visible={openItem !== null}
         transparent
@@ -829,33 +1839,6 @@ export function PendantLampRail({ products }: { products?: Product[] }) {
                     <Text style={styles.closeBtnText}>Đóng</Text>
                     <Icon name="close" size={16} color={colors.ink} />
                   </Pressable>
-                </View>
-
-                <View style={styles.previewStage}>
-                  <View
-                    style={[
-                      styles.previewGlowPool,
-                      {
-                        backgroundColor: openItem.glow ?? "#ffe29a",
-                        opacity: 0.45 * openDim,
-                      },
-                    ]}
-                  />
-                  <View
-                    style={{
-                      width: 3,
-                      height: 28,
-                      backgroundColor: "#262626",
-                    }}
-                  />
-                  <View style={{ marginTop: -2 }}>
-                    <LampVisual
-                      item={openItem}
-                      width={136}
-                      height={204}
-                      lit={openDim}
-                    />
-                  </View>
                 </View>
 
                 <View style={styles.dimmerBox}>
@@ -964,53 +1947,6 @@ export function PendantLampRail({ products }: { products?: Product[] }) {
 }
 
 const styles = StyleSheet.create({
-  outerSection: {
-    width: "100%",
-    backgroundColor: "#f8f6f0",
-    paddingTop: 10,
-    paddingBottom: 14,
-  },
-  trackBar: {
-    position: "absolute",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.14,
-    shadowRadius: 5,
-    elevation: 2,
-  },
-  adapter: {
-    borderTopLeftRadius: 2,
-    borderTopRightRadius: 2,
-    borderBottomLeftRadius: 4,
-    borderBottomRightRadius: 4,
-    overflow: "hidden",
-    alignItems: "center",
-  },
-  adapterHighlight: {
-    marginTop: 4,
-    width: "64%",
-    height: 1,
-    backgroundColor: "rgba(255,255,255,0.45)",
-  },
-  dotsRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 6,
-    marginTop: 6,
-  },
-  dot: {
-    height: 6,
-    borderRadius: 999,
-  },
-  dotActive: {
-    width: 24,
-    backgroundColor: "#2f6f5e",
-  },
-  dotInactive: {
-    width: 6,
-    backgroundColor: "rgba(41, 61, 50, 0.25)",
-  },
   modalBackdrop: {
     flex: 1,
     backgroundColor: "rgba(23, 33, 27, 0.65)",
@@ -1055,23 +1991,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: colors.ink,
     fontFamily: fontFamilies.heading,
-  },
-  previewStage: {
-    height: 215,
-    alignItems: "center",
-    justifyContent: "flex-start",
-    backgroundColor: colors.bg,
-    borderRadius: 20,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#ece7dc",
-  },
-  previewGlowPool: {
-    position: "absolute",
-    top: 48,
-    width: 210,
-    height: 155,
-    borderRadius: 999,
   },
   dimmerBox: {
     backgroundColor: "#ffffff",
