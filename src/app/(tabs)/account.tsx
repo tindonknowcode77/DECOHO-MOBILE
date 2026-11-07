@@ -65,7 +65,6 @@ export default function Account() {
           icon="layers-outline"
           href="/boards?mine=1"
         />
-        <MenuLink title="Giỏ hàng" icon="bag-outline" href="/cart" />
       </View>
       <View style={s.card}>
         <MenuLink

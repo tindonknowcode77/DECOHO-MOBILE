@@ -1,7 +1,6 @@
-import { Tabs, router } from "expo-router";
-import { Image, Text, View } from "react-native";
-import { colors, fontFamilies, Icon, IconButton, s } from "../../components/ui";
-import { useStore } from "../../lib/store";
+import { Tabs } from "expo-router";
+import { Image, View } from "react-native";
+import { colors, fontFamilies, Icon } from "../../components/ui";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 const tabs = [
   ["index", "Trang chủ", "home-outline"],
@@ -11,8 +10,6 @@ const tabs = [
 ] as const;
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
-  const { cart } = useStore();
-  const count = cart.reduce((sum, item) => sum + item.quantity, 0);
   return (
     <Tabs
       screenOptions={{
@@ -25,16 +22,6 @@ export default function TabLayout() {
             resizeMode="contain"
             accessibilityLabel="DECOHO"
           />
-        ),
-        headerRight: () => (
-          <View style={[s.row, { marginRight: 16 }]}>
-            <IconButton
-              name="bag-outline"
-              label={`Giỏ hàng, ${count} sản phẩm`}
-              onPress={() => router.push("/cart")}
-            />
-            {!!count && <View pointerEvents="none" style={{ position: "absolute", right: -3, top: 0, minWidth: 20, height: 20, paddingHorizontal: 4, borderRadius: 10, backgroundColor: colors.green, alignItems: "center", justifyContent: "center" }}><Text style={{ color: "#fff", fontSize: 10, fontWeight: "700" }}>{count > 99 ? "99+" : count}</Text></View>}
-          </View>
         ),
         tabBarActiveTintColor: colors.green,
         tabBarInactiveTintColor: "#708164",
