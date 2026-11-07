@@ -7,11 +7,6 @@
     "orientation": "portrait",
     "icon": "./assets/decoho-icon.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#F7F3EC"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.decoho.mobile",

@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams, type Href } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import { GoogleLogin } from "../../components/GoogleLogin";
 import { colors, fontFamilies } from "../../components/ui";
 import { api } from "../../lib/client";
@@ -477,8 +478,28 @@ export default function AuthScreen() {
           {mode === "register" && (
             <Text style={styles.termsText}>
               Bằng việc đăng ký, bạn đồng ý với{" "}
-              <Text style={styles.termsLink}>Điều khoản dịch vụ</Text> &{" "}
-              <Text style={styles.termsLink}>Chính sách bảo mật</Text> của DECOHO.
+              <Text
+                style={styles.termsLink}
+                onPress={() =>
+                  void WebBrowser.openBrowserAsync(
+                    "https://decoho-fe.vercel.app/privacy",
+                  )
+                }
+              >
+                Điều khoản dịch vụ
+              </Text>{" "}
+              &{" "}
+              <Text
+                style={styles.termsLink}
+                onPress={() =>
+                  void WebBrowser.openBrowserAsync(
+                    "https://decoho-fe.vercel.app/privacy",
+                  )
+                }
+              >
+                Chính sách bảo mật
+              </Text>{" "}
+              của DECOHO.
             </Text>
           )}
         </View>
