@@ -23,7 +23,7 @@ export default function Account() {
         title={
           store.user ? `Xin chào, ${store.user.fullName}` : "Góc riêng của bạn."
         }
-        subtitle="Lưu cảm hứng, theo dõi đơn hàng và chăm chút tổ ấm."
+        subtitle="Lưu cảm hứng và chăm chút tổ ấm."
       />
       {!store.ready ? (
         <State loading />
@@ -50,11 +50,6 @@ export default function Account() {
         <Text style={s.error}>{store.sessionError}</Text>
       )}
       <View style={s.card}>
-        <MenuLink
-          title="Đơn hàng của tôi"
-          icon="receipt-outline"
-          href="/orders"
-        />
         <MenuLink
           title="Sản phẩm yêu thích"
           icon="heart-outline"
