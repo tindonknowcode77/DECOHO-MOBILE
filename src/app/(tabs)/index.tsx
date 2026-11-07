@@ -1,7 +1,6 @@
-import { Image, Pressable, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { router } from "expo-router";
 import {
-  colors,
   fontFamilies,
   Icon,
   MenuLink,
@@ -17,8 +16,6 @@ import { useResource } from "../../lib/hooks";
 import { list } from "../../lib/client";
 import { idOf, type Board, type Product } from "../../lib/types";
 
-const logoHorizontal = require("../../../assets/decoho-logo-horizontal.png");
-
 export default function Home() {
   const products = useResource<Product[]>("/products");
   const boards = useResource<Board[] | { items: Board[] }>("/product-spaces", {
@@ -27,49 +24,8 @@ export default function Home() {
 
   return (
     <Screen>
-      {/* Top Header Bar matching Web F12 Mobile View */}
-      <View
-        style={{
-          marginHorizontal: -20,
-          marginTop: -20,
-          marginBottom: -24,
-          backgroundColor: "#fbf9f4",
-          borderBottomWidth: 1,
-          borderBottomColor: "#e6e2d6",
-          paddingHorizontal: 18,
-          paddingVertical: 12,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <Image
-          source={logoHorizontal}
-          style={{ width: 132, height: 36 }}
-          resizeMode="contain"
-        />
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Tìm kiếm sản phẩm"
-            hitSlop={8}
-            onPress={() => router.push("/explore")}
-          >
-            <Icon name="search-outline" size={22} color="#3a4a3f" />
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Tài khoản & Menu"
-            hitSlop={8}
-            onPress={() => router.push("/account")}
-          >
-            <Icon name="menu-outline" size={26} color="#3a4a3f" />
-          </Pressable>
-        </View>
-      </View>
-
       {/* Full-bleed Carousel PendantLampRail matching Web Mobile View */}
-      <View style={{ marginHorizontal: -20, marginBottom: -24 }}>
+      <View style={{ marginHorizontal: -20, marginTop: -20, marginBottom: -24 }}>
         <PendantLampRail products={products.data} />
       </View>
 
