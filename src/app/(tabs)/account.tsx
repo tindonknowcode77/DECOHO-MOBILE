@@ -1,5 +1,6 @@
 import { router } from "expo-router";
-import { Alert, Text, View } from "react-native";
+import * as WebBrowser from "expo-web-browser";
+import { Alert, Pressable, Text, View } from "react-native";
 import {
   Button,
   Heading,
@@ -87,6 +88,23 @@ export default function Account() {
           icon="leaf-outline"
           href="/process"
         />
+        <Pressable
+          onPress={() =>
+            void WebBrowser.openBrowserAsync("https://decoho-fe.vercel.app/privacy")
+          }
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingVertical: 10,
+          }}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+            <Icon name="shield-checkmark-outline" size={22} />
+            <Text style={s.body}>Chính sách bảo mật & Quyền riêng tư</Text>
+          </View>
+          <Icon name="open-outline" size={18} />
+        </Pressable>
       </View>
       {!!action.error && <Text style={s.error}>{action.error}</Text>}
       {store.user && (

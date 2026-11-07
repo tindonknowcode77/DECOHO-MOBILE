@@ -7,13 +7,29 @@
     "orientation": "portrait",
     "icon": "./assets/decoho-icon.png",
     "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F7F3EC"
+    },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.decoho.mobile"
+      "bundleIdentifier": "com.decoho.mobile",
+      "buildNumber": "1"
     },
     "android": {
       "package": "com.decoho.mobile",
+      "versionCode": 1,
       "icon": "./assets/decoho-icon.png",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png",
+        "backgroundColor": "#F7F3EC"
+      },
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -35,6 +51,8 @@
       "@react-native-google-signin/google-signin"
     ],
     "extra": {
+      "privacyPolicyUrl": "https://decoho-fe.vercel.app/privacy",
+      "accountDeletionUrl": "https://decoho-fe.vercel.app/privacy#delete-account",
       "router": {
         "asyncRoutes": {
           "web": true
