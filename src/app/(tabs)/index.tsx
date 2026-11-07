@@ -1,7 +1,8 @@
-import { Pressable, Text, View } from "react-native";
+import { Image, Pressable, Text, View } from "react-native";
 import { router } from "expo-router";
 import {
   colors,
+  fontFamilies,
   Icon,
   MenuLink,
   Photo,
@@ -15,54 +16,144 @@ import { PendantLampRail } from "../../components/PendantLampRail";
 import { useResource } from "../../lib/hooks";
 import { list } from "../../lib/client";
 import { idOf, type Board, type Product } from "../../lib/types";
-import { useStore } from "../../lib/store";
+
+const logoHorizontal = require("../../../assets/decoho-logo-horizontal.png");
+
 export default function Home() {
   const products = useResource<Product[]>("/products");
-  const boards = useResource<Board[] | { items: Board[] }>("/product-spaces", { auth: false });
-  const { user } = useStore();
+  const boards = useResource<Board[] | { items: Board[] }>("/product-spaces", {
+    auth: false,
+  });
+
   return (
     <Screen>
-      <View style={s.between}>
-        <Text style={s.muted}>
-          Chào {user?.fullName?.trim().split(/\s+/).at(-1) || "bạn"}, một ngày thật đẹp!
-        </Text>
-        <Icon name="sunny-outline" color={colors.orange} />
-      </View>
-      <Pressable accessibilityRole="button" accessibilityLabel="Tìm nội thất" onPress={() => router.push("/explore")} style={[s.input, s.between]}>
-        <View style={s.row}>
-          <Icon name="search-outline" size={20} />
-          <Text style={s.muted}>Tìm một món đồ cho tổ ấm…</Text>
+      {/* Top Header Bar matching Web F12 Mobile View */}
+      <View
+        style={{
+          marginHorizontal: -20,
+          marginTop: -20,
+          marginBottom: -24,
+          backgroundColor: "#fbf9f4",
+          borderBottomWidth: 1,
+          borderBottomColor: "#e6e2d6",
+          paddingHorizontal: 18,
+          paddingVertical: 12,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <Image
+          source={logoHorizontal}
+          style={{ width: 132, height: 36 }}
+          resizeMode="contain"
+        />
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Tìm kiếm sản phẩm"
+            hitSlop={8}
+            onPress={() => router.push("/explore")}
+          >
+            <Icon name="search-outline" size={22} color="#3a4a3f" />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Tài khoản & Menu"
+            hitSlop={8}
+            onPress={() => router.push("/account")}
+          >
+            <Icon name="menu-outline" size={26} color="#3a4a3f" />
+          </Pressable>
         </View>
-        <Icon name="arrow-forward" size={18} />
-      </Pressable>
-      <PendantLampRail products={products.data} />
-      <View style={{ flexDirection: "row", gap: 10 }}>
+      </View>
+
+      {/* Full-bleed Carousel PendantLampRail matching Web Mobile View */}
+      <View style={{ marginHorizontal: -20, marginBottom: -24 }}>
+        <PendantLampRail products={products.data} />
+      </View>
+
+      {/* Feature Strip ("Gom ý tưởng" / "Chọn điều phù hợp" / "Kết nối & sẻ chia") matching Web Mobile View */}
+      <View
+        style={{
+          marginHorizontal: -20,
+          backgroundColor: "#edf0e7",
+          borderTopWidth: 1,
+          borderBottomWidth: 1,
+          borderColor: "#e2e5d8",
+          paddingHorizontal: 20,
+          paddingVertical: 18,
+          gap: 16,
+        }}
+      >
         {(
           [
-            { icon: "layers-outline", label: "Moodboard", route: "/boards" },
-            { icon: "cube-outline", label: "Showroom 3D", route: "/showrooms" },
+            {
+              icon: "layers-outline",
+              title: "Gom ý tưởng",
+              text: "Khám phá moodboard cho tổ ấm",
+              route: "/boards",
+            },
+            {
+              icon: "bed-outline",
+              title: "Chọn điều phù hợp",
+              text: "Tìm nội thất theo phong cách của bạn",
+              route: "/explore",
+            },
+            {
+              icon: "chatbubble-ellipses-outline",
+              title: "Kết nối & sẻ chia",
+              text: "Cùng cộng đồng kể chuyện không gian",
+              route: "/community",
+            },
           ] as const
         ).map((item) => (
           <Pressable
-            key={item.route}
+            key={item.title}
             accessibilityRole="button"
             onPress={() => router.push(item.route)}
-            style={[
-              s.card,
-              { flex: 1, alignItems: "center", padding: 14, gap: 10 },
-            ]}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 14,
+            }}
           >
-            <View style={{ backgroundColor: "#eef2e7", width: 46, height: 46, borderRadius: 16, alignItems: "center", justifyContent: "center" }}>
-              <Icon name={item.icon} size={23} />
-            </View>
-            <Text
-              style={{ fontSize: 13, fontWeight: "600", color: colors.green, textAlign: "center" }}
+            <View
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 12,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
             >
-              {item.label}
-            </Text>
+              <Icon name={item.icon} size={24} color="#687a61" />
+            </View>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: "700",
+                  color: "#223329",
+                  fontFamily: fontFamilies.heading,
+                }}
+              >
+                {item.title}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: "#6b7466",
+                  fontFamily: fontFamilies.body,
+                }}
+              >
+                {item.text}
+              </Text>
+            </View>
           </Pressable>
         ))}
       </View>
+
       <Section title="Một chút mới cho nhà" href="/explore" />
       <State
         loading={products.loading}
@@ -100,7 +191,12 @@ export default function Home() {
             <Pressable
               accessibilityRole="button"
               key={idOf(board)}
-              onPress={() => router.push({ pathname: "/boards/[id]", params: { id: idOf(board), kind: "product-spaces" } })}
+              onPress={() =>
+                router.push({
+                  pathname: "/boards/[id]",
+                  params: { id: idOf(board), kind: "product-spaces" },
+                })
+              }
               style={{ gap: 10 }}
             >
               <Photo uri={board.imageUrl} height={210} />
@@ -111,10 +207,10 @@ export default function Home() {
           ))}
       <View style={s.card}>
         <MenuLink
-          title="Gặp những người yêu nhà"
-          subtitle="Chia sẻ ý tưởng cùng cộng đồng"
-          icon="people-outline"
-          href="/community"
+          title="Showroom 3D trực quan"
+          subtitle="Trải nghiệm không gian 3D tương tác"
+          icon="cube-outline"
+          href="/showrooms"
         />
         <MenuLink
           title="Bắt đầu từ đâu?"

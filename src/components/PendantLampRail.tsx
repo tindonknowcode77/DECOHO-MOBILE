@@ -209,10 +209,10 @@ export const LAMP_DEMO_ITEMS: PendantLampItem[] = [
   },
 ];
 
-/**
- * Renders the 3D Cumulus Cloud Pendant Lamp natively on Android, iOS, and Web
- * with smooth cross-fade between switched-off white cloud puffs and warm golden internal light.
- */
+function clamp(v: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, v));
+}
+
 function CloudLampGraphic({
   width,
   height,
@@ -222,25 +222,24 @@ function CloudLampGraphic({
   height: number;
   lit: number;
 }) {
-  const cordW = Math.max(1.5, width * 0.022);
+  const cordW = Math.max(2, width * 0.02);
   const cordH = height * 0.35;
   const cloudTop = height * 0.31;
-  const cloudW = width * 0.82;
-  const cloudH = height * 0.32;
+  const cloudW = width * 0.84;
+  const cloudH = height * 0.33;
   const left = (width - cloudW) / 2;
 
   const puffs = [
-    { x: 0.06, y: 0.28, w: 0.44, h: 0.56 },
-    { x: 0.5, y: 0.28, w: 0.44, h: 0.56 },
-    { x: 0.18, y: 0.08, w: 0.42, h: 0.56 },
-    { x: 0.4, y: 0.08, w: 0.42, h: 0.56 },
-    { x: 0.3, y: 0.0, w: 0.4, h: 0.52 },
-    { x: 0.08, y: 0.24, w: 0.84, h: 0.62 },
+    { x: 0.05, y: 0.28, w: 0.45, h: 0.56 },
+    { x: 0.5, y: 0.28, w: 0.45, h: 0.56 },
+    { x: 0.17, y: 0.08, w: 0.43, h: 0.56 },
+    { x: 0.4, y: 0.08, w: 0.43, h: 0.56 },
+    { x: 0.29, y: 0.0, w: 0.42, h: 0.52 },
+    { x: 0.07, y: 0.24, w: 0.86, h: 0.62 },
   ];
 
   return (
     <View style={{ width, height }} pointerEvents="none">
-      {/* Upper internal cord matching CORD_BG */}
       <View
         style={{
           position: "absolute",
@@ -248,11 +247,9 @@ function CloudLampGraphic({
           left: (width - cordW) / 2,
           width: cordW,
           height: cordH,
-          backgroundColor: "#2b2b2b",
+          backgroundColor: "#262626",
         }}
       />
-
-      {/* Cloud container */}
       <View
         style={{
           position: "absolute",
@@ -262,7 +259,6 @@ function CloudLampGraphic({
           height: cloudH,
         }}
       >
-        {/* Soft under-shadow */}
         <View
           style={{
             position: "absolute",
@@ -275,8 +271,6 @@ function CloudLampGraphic({
             opacity: 0.32,
           }}
         />
-
-        {/* Off-state white/slate cloud puffs */}
         {puffs.map((p, idx) => (
           <View
             key={`off-${idx}`}
@@ -289,12 +283,10 @@ function CloudLampGraphic({
               borderRadius: cloudW,
               backgroundColor: idx === puffs.length - 1 ? "#f8fafc" : "#f1f5f9",
               borderWidth: 0.5,
-              borderColor: "rgba(203,213,225,0.55)",
+              borderColor: "rgba(203,213,225,0.5)",
             }}
           />
         ))}
-
-        {/* On-state warm golden glow puffs */}
         <View style={[StyleSheet.absoluteFill, { opacity: lit }]}>
           {puffs.map((p, idx) => (
             <View
@@ -311,7 +303,6 @@ function CloudLampGraphic({
               }}
             />
           ))}
-          {/* Inner warm amber core */}
           <View
             style={{
               position: "absolute",
@@ -321,7 +312,7 @@ function CloudLampGraphic({
               height: cloudH * 0.55,
               borderRadius: cloudW,
               backgroundColor: "#fde68a",
-              opacity: 0.85,
+              opacity: 0.88,
             }}
           />
         </View>
@@ -346,6 +337,20 @@ function LampVisual({
   }
   return (
     <View style={{ width, height }} pointerEvents="none">
+      {/* Subtle drop shadow of shade */}
+      <Image
+        source={{ uri: item.image }}
+        style={{
+          width,
+          height,
+          position: "absolute",
+          top: 3,
+          left: 4,
+          opacity: 0.14,
+          tintColor: "#000000",
+        }}
+        resizeMode="contain"
+      />
       <Image
         source={{ uri: item.image }}
         style={{ width, height, position: "absolute", top: 0, left: 0 }}
@@ -371,17 +376,12 @@ export function PendantLampRail({ products }: { products?: Product[] }) {
   const [stageWidth, setStageWidth] = useState(
     () => Dimensions.get("window").width,
   );
-  const [activeIndex, setActiveIndex] = useState<number | null>(0);
+  const [activeIndex, setActiveIndex] = useState<number>(4); // Default center on rattan/paper-lantern like web mobile view
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [autoplay, setAutoplay] = useState(true);
   const [dims, setDims] = useState<number[]>(() =>
     LAMP_DEMO_ITEMS.map(() => 1),
   );
-  const [swings, setSwings] = useState<number[]>(() =>
-    LAMP_DEMO_ITEMS.map(() => 0),
-  );
-  const velocities = useRef<number[]>(LAMP_DEMO_ITEMS.map(() => 0));
-  const angles = useRef<number[]>(LAMP_DEMO_ITEMS.map(() => 0));
 
   const items = useMemo(() => {
     if (!products?.length) return LAMP_DEMO_ITEMS;
@@ -399,288 +399,409 @@ export function PendantLampRail({ products }: { products?: Product[] }) {
   }, [products]);
 
   const count = items.length;
-  const padX = Math.max(8, stageWidth * 0.025);
-  const slotSpan = (stageWidth - padX * 2) / count;
-  const lampW = Math.min(118, Math.max(40, slotSpan * 0.94));
-  const lampH = lampW * 1.5;
-  const maxCord = lampH * 0.68;
-  const trackTop = 10;
-  const trackH = Math.max(5, Math.round(lampW * 0.085));
-  const adapterW = Math.max(10, Math.round(lampW * 0.2));
-  const adapterH = Math.max(7, Math.round(trackH * 1.45));
-  const pivotY = trackTop + trackH - 1;
-  const stageHeight = Math.round(pivotY + adapterH + maxCord + lampH * 0.96);
 
-  const nudgeLamp = (index: number, impulse: number) => {
-    if (index < 0 || index >= count) return;
-    velocities.current[index] = Math.max(
-      -28,
-      Math.min(28, (velocities.current[index] ?? 0) + impulse),
-    );
-    if (index > 0) {
-      velocities.current[index - 1] =
-        (velocities.current[index - 1] ?? 0) + impulse * 0.25;
-    }
-    if (index + 1 < count) {
-      velocities.current[index + 1] =
-        (velocities.current[index + 1] ?? 0) + impulse * 0.25;
-    }
-  };
+  // Match exact Web F12 mobile carousel geometry:
+  // fit = (width - 32) / (count * (2/3) * 1.1) -> carousel when fit < 112 (i.e. width < 690)
+  const fit = (stageWidth - 32) / (Math.max(1, count) * (2 / 3) * 1.1);
+  const isCarousel = count > 1 && fit < 112;
+  const h = Math.round(
+    isCarousel
+      ? Math.min(224, Math.max(175, stageWidth * 0.56))
+      : Math.min(200, Math.max(60, fit)),
+  );
+  const w = Math.round(h * (2 / 3));
+  const trackH = Math.round(clamp(h * 0.05, 6, 12));
+  const trackTop = 8;
+  const adapterH = Math.round(clamp(h * 0.075, 8, 17));
+  const adapterW = Math.round(clamp(w * 0.19, 14, 28));
+  const pivotY = trackTop + Math.round(trackH * 0.6) + adapterH;
+  const cords = useMemo(
+    () => items.map((item) => Math.round(h * 0.7 * item.drop)),
+    [items, h],
+  );
+  const lowest = Math.max(0, ...cords) + h * 0.8;
+  const stageHeight = Math.round(pivotY + lowest + h * 0.12);
+  const gap = w * 1.08;
+  const cordW = Math.max(1.6, w * 0.02);
 
-  // Autoplay lights lamps one by one until the user interacts
+  // Simulation state for smooth carousel sliding & pendulum swing
+  const simRef = useRef({
+    x: items.map((_, i) => stageWidth / 2 + (i - 4) * (w * 1.08)),
+    vx: items.map(() => 0),
+    swing: items.map(() => 0),
+    vswing: items.map(() => 0),
+    swipe: 0,
+  });
+
+  const [renderState, setRenderState] = useState(() => ({
+    x: items.map((_, i) => stageWidth / 2 + (i - 4) * (w * 1.08)),
+    swing: items.map(() => 0),
+  }));
+
+  const activeRef = useRef(activeIndex);
+  activeRef.current = activeIndex;
+  const geoRef = useRef({ stageWidth, w, h, gap, isCarousel, cords });
+  geoRef.current = { stageWidth, w, h, gap, isCarousel, cords };
+
+  // Re-initialize positions when width changes significantly
+  useEffect(() => {
+    const g = geoRef.current;
+    if (g.isCarousel) {
+      simRef.current.x = items.map(
+        (_, i) => g.stageWidth / 2 + (i - activeRef.current) * g.gap,
+      );
+    } else {
+      const edge = Math.max(16, g.w * 0.3);
+      const spacing = clamp(
+        (g.stageWidth - edge * 2) / count,
+        g.w * 0.88 * 1.04,
+        g.w * 1.42,
+      );
+      const start = (g.stageWidth - spacing * count) / 2 + spacing / 2;
+      simRef.current.x = items.map((_, i) => start + i * spacing);
+    }
+    setRenderState({
+      x: [...simRef.current.x],
+      swing: [...simRef.current.swing],
+    });
+  }, [stageWidth, isCarousel, count]);
+
+  // Autoplay advances carousel lamp every 2.6s just like web
   useEffect(() => {
     if (!autoplay || openIndex !== null) return;
     const id = setInterval(() => {
       setActiveIndex((prev) => {
-        const next = prev === null ? 0 : (prev + 1) % count;
-        nudgeLamp(next, 6);
+        const next = (prev + 1) % count;
+        simRef.current.vswing[next] = (simRef.current.vswing[next] ?? 0) + 14;
         return next;
       });
-    }, 2200);
+    }, 2600);
     return () => clearInterval(id);
   }, [autoplay, openIndex, count]);
 
-  // Simple damped pendulum simulation
+  // Spring + pendulum animation loop matching web PendantLampRail
   useEffect(() => {
     let raf = 0;
     let last = Date.now();
-    const step = () => {
+    const tick = () => {
       const now = Date.now();
-      const dt = Math.min(0.04, (now - last) / 1000);
+      const dt = Math.min(0.032, (now - last) / 1000);
       last = now;
-      let moving = false;
+      const s = simRef.current;
+      const g = geoRef.current;
+      const centre = activeRef.current;
+
+      let dirty = false;
       for (let i = 0; i < count; i++) {
-        const drop = items[i]?.drop ?? 0.8;
-        const omega = 5.2 / Math.sqrt(Math.max(0.55, drop));
-        let a = angles.current[i] ?? 0;
-        let v = velocities.current[i] ?? 0;
-        v += -omega * omega * a * dt;
-        v *= Math.exp(-2.2 * dt);
-        a += v * dt;
-        if (Math.abs(a) > 0.08 || Math.abs(v) > 0.08) {
-          moving = true;
+        const targetX = g.isCarousel
+          ? g.stageWidth / 2 + (i - centre) * g.gap + s.swipe
+          : (() => {
+              const edge = Math.max(16, g.w * 0.3);
+              const spacing = clamp(
+                (g.stageWidth - edge * 2) / count,
+                g.w * 0.88 * 1.04,
+                g.w * 1.42,
+              );
+              const start = (g.stageWidth - spacing * count) / 2 + spacing / 2;
+              return start + i * spacing;
+            })();
+
+        const prevX = s.x[i] ?? targetX;
+        const prevVx = s.vx[i] ?? 0;
+
+        // Horizontal spring along track
+        let vx = prevVx + (targetX - prevX) * 65 * dt;
+        vx *= Math.exp(-11 * dt);
+        const nextX = prevX + vx * dt;
+        const ax = (vx - prevVx) / Math.max(0.001, dt);
+
+        // Pendulum swing coupled to track acceleration
+        const cord = g.cords[i] ?? 100;
+        const reach = cord + g.h * 0.55;
+        let swing = s.swing[i] ?? 0;
+        let vswing = s.vswing[i] ?? 0;
+        const omega = 5.4;
+        vswing += (-omega * omega * swing + (ax / reach) * 14) * dt;
+        vswing *= Math.exp(-2.2 * dt);
+        swing = clamp(swing + vswing * dt, -14, 14);
+
+        if (
+          Math.abs(targetX - nextX) > 0.25 ||
+          Math.abs(vx) > 0.25 ||
+          Math.abs(swing) > 0.08 ||
+          Math.abs(vswing) > 0.08
+        ) {
+          dirty = true;
         } else {
-          a = 0;
-          v = 0;
+          swing = 0;
+          vswing = 0;
         }
-        angles.current[i] = a;
-        velocities.current[i] = v;
+
+        s.x[i] = nextX;
+        s.vx[i] = vx;
+        s.swing[i] = swing;
+        s.vswing[i] = vswing;
       }
-      if (moving) {
-        setSwings([...angles.current]);
+
+      if (dirty) {
+        setRenderState({
+          x: [...s.x],
+          swing: [...s.swing],
+        });
       }
-      raf = requestAnimationFrame(step);
+      raf = requestAnimationFrame(tick);
     };
-    raf = requestAnimationFrame(step);
+    raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [count, items]);
+  }, [count]);
 
-  const indexFromX = (x: number) => {
-    const idx = Math.floor((x - padX) / slotSpan);
-    return Math.max(0, Math.min(count - 1, idx));
-  };
-
-  const lastTouchIndex = useRef<number>(-1);
   const panResponder = useMemo(
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => false,
         onMoveShouldSetPanResponder: (_, g) =>
-          Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy),
-        onPanResponderGrant: (evt) => {
+          Math.abs(g.dx) > 6 && Math.abs(g.dx) > Math.abs(g.dy),
+        onPanResponderGrant: () => {
           setAutoplay(false);
-          const idx = indexFromX(evt.nativeEvent.locationX);
-          lastTouchIndex.current = idx;
-          setActiveIndex(idx);
-          nudgeLamp(idx, 8);
         },
-        onPanResponderMove: (evt, g) => {
-          const idx = indexFromX(evt.nativeEvent.locationX);
-          if (idx !== lastTouchIndex.current) {
-            lastTouchIndex.current = idx;
-            setActiveIndex(idx);
-            nudgeLamp(idx, g.vx > 0 ? 10 : -10);
+        onPanResponderMove: (_, g) => {
+          simRef.current.swipe = clamp(g.dx * 0.85, -gap * 1.2, gap * 1.2);
+        },
+        onPanResponderRelease: (_, g) => {
+          simRef.current.swipe = 0;
+          const step =
+            g.dx < -28 || g.vx < -0.35 ? 1 : g.dx > 28 || g.vx > 0.35 ? -1 : 0;
+          if (step !== 0) {
+            setActiveIndex((prev) => {
+              const next = clamp(prev + step, 0, count - 1);
+              simRef.current.vswing[next] =
+                (simRef.current.vswing[next] ?? 0) - step * 16;
+              return next;
+            });
           }
         },
+        onPanResponderTerminate: () => {
+          simRef.current.swipe = 0;
+        },
       }),
-    [padX, slotSpan, count],
+    [gap, count],
   );
 
   const openItem = openIndex !== null ? items[openIndex] : null;
   const openDim = openIndex !== null ? (dims[openIndex] ?? 1) : 1;
+  const activeCenter = renderState.x[activeIndex] ?? stageWidth / 2;
+  const activeCord = cords[activeIndex] ?? 100;
 
   return (
     <View
       onLayout={(e) => {
-        const w = e.nativeEvent.layout.width;
-        if (w > 0 && Math.abs(w - stageWidth) > 1) setStageWidth(w);
+        const width = e.nativeEvent.layout.width;
+        if (width > 0 && Math.abs(width - stageWidth) > 1) {
+          setStageWidth(width);
+        }
       }}
-      style={[
-        styles.container,
-        {
-          height: stageHeight,
-          marginHorizontal: -20,
-        },
-      ]}
-      {...panResponder.panHandlers}
+      style={styles.outerSection}
     >
-      {/* Warm ambient glow pool behind the active lamp */}
-      {activeIndex !== null && (
+      {/* Interactive Lamp Stage */}
+      <View
+        style={{
+          width: "100%",
+          height: stageHeight,
+          position: "relative",
+          overflow: "hidden",
+        }}
+        {...panResponder.panHandlers}
+      >
+        {/* Warm Radial Glow Pool & Light Cone behind active lamp */}
         <View
           pointerEvents="none"
           style={{
             position: "absolute",
-            left:
-              padX +
-              (activeIndex + 0.5) * slotSpan -
-              Math.max(70, lampW * 1.35),
-            top:
-              pivotY +
-              maxCord * (items[activeIndex]?.drop ?? 0.8) +
-              lampH * 0.25,
-            width: Math.max(140, lampW * 2.7),
-            height: Math.max(110, lampH * 1.25),
+            left: activeCenter - w * 1.15,
+            top: pivotY + activeCord + h * 0.16,
+            width: w * 2.3,
+            height: h * 1.05,
             borderRadius: 999,
-            backgroundColor: items[activeIndex]?.glow ?? "#ffe29a",
-            opacity: 0.32 * (dims[activeIndex] ?? 1),
+            backgroundColor: items[activeIndex]?.glow ?? "#ffe19a",
+            opacity: 0.34 * (dims[activeIndex] ?? 1),
           }}
         />
-      )}
-
-      {/* Brushed horizontal metallic track */}
-      <View
-        pointerEvents="none"
-        style={[
-          styles.trackOuter,
-          {
-            top: trackTop,
-            height: trackH,
-            left: Math.max(4, padX * 0.35),
-            right: Math.max(4, padX * 0.35),
-          },
-        ]}
-      >
-        <LinearGradient
-          colors={["#9ba699", "#6d786c", "#424a42"]}
-          style={StyleSheet.absoluteFill}
-        />
-        {/* Left & Right end caps */}
         <View
+          pointerEvents="none"
+          style={{
+            position: "absolute",
+            left: activeCenter - w * 0.72,
+            top: pivotY + activeCord + h * 0.38,
+            width: w * 1.44,
+            height: h * 0.68,
+            borderRadius: 999,
+            backgroundColor: "#ffefc2",
+            opacity: 0.42 * (dims[activeIndex] ?? 1),
+          }}
+        />
+
+        {/* Horizontal Metallic Track (Edge-to-Edge in Carousel mode, matching web F12 mobile view) */}
+        <View
+          pointerEvents="none"
           style={[
-            styles.trackCap,
+            styles.trackBar,
             {
-              left: -2,
-              width: Math.max(7, trackH * 1.25),
-              height: trackH * 1.85,
-              top: -trackH * 0.42,
+              top: trackTop,
+              height: trackH,
+              left: 0,
+              right: 0,
             },
           ]}
-        />
-        <View
-          style={[
-            styles.trackCap,
-            {
-              right: -2,
-              width: Math.max(7, trackH * 1.25),
-              height: trackH * 1.85,
-              top: -trackH * 0.42,
-            },
-          ]}
-        />
-      </View>
-
-      {/* Hanging Pendant Lamps */}
-      {items.map((item, i) => {
-        const isLit = activeIndex === i;
-        const litVal = isLit ? (dims[i] ?? 1) : 0.12;
-        const cordLen = Math.round(maxCord * item.drop);
-        const centerX = padX + (i + 0.5) * slotSpan;
-        const swingDeg = swings[i] ?? 0;
-        const cordW = Math.max(1.5, lampW * 0.022);
-
-        return (
-          <Pressable
-            key={item.id}
-            accessibilityRole="button"
-            accessibilityLabel={item.name}
-            onHoverIn={
-              Platform.OS === "web"
-                ? () => {
-                    setAutoplay(false);
-                    setActiveIndex(i);
-                    nudgeLamp(i, 7);
-                  }
-                : undefined
-            }
-            onPress={() => {
-              setAutoplay(false);
-              setActiveIndex(i);
-              nudgeLamp(i, 9);
-              setOpenIndex(i);
-            }}
+        >
+          <LinearGradient
+            colors={["#9ba698", "#6f7b6e", "#3f473f"]}
+            style={StyleSheet.absoluteFill}
+          />
+          <View
             style={{
               position: "absolute",
-              top: pivotY - Math.round(adapterH * 0.35),
-              left: centerX - lampW / 2,
-              width: lampW,
-              height: adapterH + cordLen + lampH * 0.84,
-              zIndex: isLit ? 20 : 10,
-              alignItems: "center",
+              left: 0,
+              right: 0,
+              bottom: 1,
+              height: 1,
+              backgroundColor: "rgba(0,0,0,0.35)",
             }}
-          >
-            {/* Track Adapter */}
-            <View
-              style={[
-                styles.adapter,
-                {
-                  width: adapterW,
-                  height: adapterH,
-                },
-              ]}
-            >
-              <View style={styles.adapterHighlight} />
-            </View>
+          />
+        </View>
 
-            {/* Swinging Pendulum Group */}
-            <View
+        {/* Pendant Lamps */}
+        {items.map((item, i) => {
+          const x = renderState.x[i] ?? stageWidth / 2 + (i - activeIndex) * gap;
+          // Skip rendering off-screen lamps far outside viewport
+          if (x < -w * 1.5 || x > stageWidth + w * 1.5) return null;
+
+          const isLit = activeIndex === i;
+          const litVal = isLit ? (dims[i] ?? 1) : 0.12;
+          const cord = cords[i] ?? 100;
+          const swing = renderState.swing[i] ?? 0;
+
+          return (
+            <Pressable
+              key={item.id}
+              accessibilityRole="button"
+              accessibilityLabel={item.name}
+              onPress={() => {
+                setAutoplay(false);
+                if (isCarousel && activeIndex !== i) {
+                  // Tapping a side lamp in carousel slides it to center first, just like web!
+                  setActiveIndex(i);
+                  simRef.current.vswing[i] =
+                    (simRef.current.vswing[i] ?? 0) + 12;
+                } else {
+                  setActiveIndex(i);
+                  setOpenIndex(i);
+                }
+              }}
               style={{
-                width: lampW,
-                height: cordLen + lampH,
+                position: "absolute",
+                top: pivotY - adapterH,
+                left: x - w / 2,
+                width: w,
+                height: adapterH + cord + h * 0.84,
+                zIndex: isLit ? 20 : 10,
                 alignItems: "center",
-                transform: [{ rotate: `${swingDeg.toFixed(2)}deg` }],
               }}
             >
-              {/* Cord from track adapter to lamp photo */}
+              {/* Track Adapter Canopy */}
               <View
-                style={{
-                  width: cordW,
-                  height: cordLen + 2,
-                  backgroundColor: "#262626",
-                }}
-              />
+                style={[
+                  styles.adapter,
+                  {
+                    width: adapterW,
+                    height: adapterH,
+                  },
+                ]}
+              >
+                <LinearGradient
+                  colors={["#5d675c", "#8e998c", "#474f46"]}
+                  start={{ x: 0, y: 0.5 }}
+                  end={{ x: 1, y: 0.5 }}
+                  style={[StyleSheet.absoluteFill, { borderRadius: 3 }]}
+                />
+                <View style={styles.adapterHighlight} />
+              </View>
 
-              {/* Lamp Photo (Off + On cross-fade) */}
+              {/* Swinging Pendulum */}
               <View
                 style={{
                   position: "absolute",
-                  top: cordLen,
-                  width: lampW,
-                  height: lampH,
+                  top: adapterH,
+                  width: w,
+                  height: cord + h,
+                  alignItems: "center",
+                  transform: [{ rotate: `${swing.toFixed(2)}deg` }],
                 }}
               >
-                <LampVisual
-                  item={item}
-                  width={lampW}
-                  height={lampH}
-                  lit={litVal}
+                {/* Metal collar under adapter */}
+                <View
+                  style={{
+                    width: Math.max(4, cordW * 2.2),
+                    height: Math.max(3, adapterH * 0.35),
+                    backgroundColor: "#4f584e",
+                    borderBottomLeftRadius: 1,
+                    borderBottomRightRadius: 1,
+                  }}
                 />
-              </View>
-            </View>
-          </Pressable>
-        );
-      })}
 
-      {/* Detail & Dimmer Modal when user taps a lamp */}
+                {/* Cord */}
+                <View
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    width: cordW,
+                    height: cord + 2,
+                    backgroundColor: "#262626",
+                  }}
+                />
+
+                {/* Lamp Shade Photo */}
+                <View
+                  style={{
+                    position: "absolute",
+                    top: cord,
+                    width: w,
+                    height: h,
+                  }}
+                >
+                  <LampVisual item={item} width={w} height={h} lit={litVal} />
+                </View>
+              </View>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {/* Carousel Pagination Dots (exact match with web F12 mobile view) */}
+      {isCarousel && count > 1 && (
+        <View style={styles.dotsRow}>
+          {items.map((item, i) => {
+            const selected = activeIndex === i;
+            return (
+              <Pressable
+                key={item.id}
+                hitSlop={6}
+                onPress={() => {
+                  setAutoplay(false);
+                  setActiveIndex(i);
+                  simRef.current.vswing[i] =
+                    (simRef.current.vswing[i] ?? 0) + 12;
+                }}
+                style={[
+                  styles.dot,
+                  selected ? styles.dotActive : styles.dotInactive,
+                ]}
+              />
+            );
+          })}
+        </View>
+      )}
+
+      {/* Detail & Dimmer Modal when tapping the active center lamp */}
       <Modal
         visible={openItem !== null}
         transparent
@@ -694,7 +815,6 @@ export function PendantLampRail({ products }: { products?: Product[] }) {
               showsVerticalScrollIndicator={false}
             >
               <View style={styles.modalCard}>
-                {/* Header row */}
                 <View style={styles.modalHeader}>
                   <Text style={styles.modalCounter}>
                     {String(openIndex + 1).padStart(2, "0")} /{" "}
@@ -711,7 +831,6 @@ export function PendantLampRail({ products }: { products?: Product[] }) {
                   </Pressable>
                 </View>
 
-                {/* Lamp Preview with Live Dimmer Glow */}
                 <View style={styles.previewStage}>
                   <View
                     style={[
@@ -739,7 +858,6 @@ export function PendantLampRail({ products }: { products?: Product[] }) {
                   </View>
                 </View>
 
-                {/* Dimmer Control */}
                 <View style={styles.dimmerBox}>
                   <View style={styles.dimmerHeader}>
                     <Text style={styles.dimmerLabel}>Độ sáng (Dimmer)</Text>
@@ -779,7 +897,6 @@ export function PendantLampRail({ products }: { products?: Product[] }) {
                   </View>
                 </View>
 
-                {/* Product Info */}
                 <Text style={styles.modalTitle}>{openItem.name}</Text>
                 <Text style={styles.modalDesc}>{openItem.description}</Text>
 
@@ -791,7 +908,6 @@ export function PendantLampRail({ products }: { products?: Product[] }) {
                   ))}
                 </View>
 
-                {/* Real Product Card */}
                 <View style={styles.realProductRow}>
                   <Image
                     source={{ uri: openItem.productImage }}
@@ -799,7 +915,7 @@ export function PendantLampRail({ products }: { products?: Product[] }) {
                   />
                   <View style={{ flex: 1, gap: 2 }}>
                     <Text style={styles.realProductEyebrow}>
-                      SẢN PHẨM THỰC TẾ TRÊN DECOHO
+                      ẢNH SẢN PHẨM THỰC TẾ
                     </Text>
                     <Text numberOfLines={1} style={styles.realProductName}>
                       {openItem.name}
@@ -808,7 +924,6 @@ export function PendantLampRail({ products }: { products?: Product[] }) {
                   </View>
                 </View>
 
-                {/* Actions */}
                 <View style={styles.modalActions}>
                   <Pressable
                     accessibilityRole="button"
@@ -849,40 +964,52 @@ export function PendantLampRail({ products }: { products?: Product[] }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    position: "relative",
-    overflow: "hidden",
-    backgroundColor: colors.bg,
+  outerSection: {
+    width: "100%",
+    backgroundColor: "#f8f6f0",
+    paddingTop: 10,
+    paddingBottom: 14,
   },
-  trackOuter: {
+  trackBar: {
     position: "absolute",
-    borderRadius: 3,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.18,
-    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.14,
+    shadowRadius: 5,
     elevation: 2,
   },
-  trackCap: {
-    position: "absolute",
-    borderRadius: 2,
-    backgroundColor: "#5e685d",
-    borderWidth: 0.5,
-    borderColor: "#3e463e",
-  },
   adapter: {
-    backgroundColor: "#636e62",
     borderTopLeftRadius: 2,
     borderTopRightRadius: 2,
     borderBottomLeftRadius: 4,
     borderBottomRightRadius: 4,
+    overflow: "hidden",
     alignItems: "center",
-    paddingTop: 2,
   },
   adapterHighlight: {
+    marginTop: 4,
     width: "64%",
     height: 1,
     backgroundColor: "rgba(255,255,255,0.45)",
+  },
+  dotsRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 6,
+  },
+  dot: {
+    height: 6,
+    borderRadius: 999,
+  },
+  dotActive: {
+    width: 24,
+    backgroundColor: "#2f6f5e",
+  },
+  dotInactive: {
+    width: 6,
+    backgroundColor: "rgba(41, 61, 50, 0.25)",
   },
   modalBackdrop: {
     flex: 1,
