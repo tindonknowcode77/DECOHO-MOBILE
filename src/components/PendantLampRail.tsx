@@ -1027,7 +1027,8 @@ function WebPendantLampRail({
     }
     if (cancelled || p.moved || p.index < 0) return;
     stop();
-    if (p.kind !== "mouse" && live.current.active !== p.index) choose(p.index);
+    const currentFront = live.current.active ?? live.current.carouselIndex;
+    if (p.kind !== "mouse" && currentFront !== p.index) choose(p.index);
     else pendingOpen.current = p.index;
   };
 
@@ -1746,6 +1747,719 @@ window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringif
 </html>`;
 }
 
+function WebLampDetail({
+  item,
+  index,
+  total,
+  dim,
+  onDim,
+  onClose,
+  onOpenProduct,
+  onOpenShopee,
+}: {
+  item: PendantLamp;
+  index: number;
+  total: number;
+  dim: number;
+  onDim: (val: number) => void;
+  onClose: () => void;
+  onOpenProduct: (productId: string) => void;
+  onOpenShopee: (url: string) => void;
+}) {
+  const swayRef = useRef<HTMLDivElement | null>(null);
+  const [shown, setShown] = useState(false);
+  const percent = Math.round(dim * 100);
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setShown(true));
+    const sway = swayRef.current?.animate?.(
+      [
+        { transform: "rotate(0deg)" },
+        { transform: "rotate(2.2deg)", offset: 0.22 },
+        { transform: "rotate(-1.3deg)", offset: 0.5 },
+        { transform: "rotate(0.6deg)", offset: 0.76 },
+        { transform: "rotate(0deg)" },
+      ],
+      { duration: 1700, delay: 120, easing: "ease-in-out" },
+    );
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      cancelAnimationFrame(raf);
+      sway?.cancel();
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 9999,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        overflowY: "auto",
+        overflowX: "hidden",
+        padding: "0 20px 32px",
+        color: "#1f2e25",
+        fontFamily: "system-ui, -apple-system, sans-serif",
+        ["--lamp-glow" as string]: item.glow ?? "#ffdb8c",
+        ["--lamp-accent" as string]: "#2f6f5e",
+        ["--pool-k" as string]: "0.85",
+        ["--beam-k" as string]: "0.42",
+        ["--bloom-k" as string]: "0.22",
+      }}
+    >
+      {/* Translucent cream backdrop */}
+      <div
+        aria-hidden="true"
+        onClick={onClose}
+        style={{
+          position: "fixed",
+          inset: 0,
+          backgroundColor: "rgba(248, 246, 240, 0.94)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          opacity: shown ? 1 : 0,
+          transition: "opacity 280ms ease",
+        }}
+      />
+
+      {/* Top-right Close button ("Đóng ✕") */}
+      <button
+        type="button"
+        onClick={onClose}
+        style={{
+          position: "fixed",
+          right: 18,
+          top: 18,
+          zIndex: 20,
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 8,
+          borderRadius: 9999,
+          padding: "6px 12px",
+          fontSize: 13,
+          fontWeight: 500,
+          color: "#6b7466",
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          outline: "none",
+        }}
+      >
+        <span>Đóng</span>
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 16 16"
+          style={{ width: 14, height: 14 }}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+        >
+          <path d="M3 3l10 10M13 3L3 13" />
+        </svg>
+      </button>
+
+      {/* Main Content Container */}
+      <div
+        style={{
+          position: "relative",
+          zIndex: 10,
+          width: "100%",
+          maxWidth: 420,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 18,
+        }}
+      >
+        {/* Hanging Lamp with Cord, Pool & Conic Beam */}
+        <div
+          style={{
+            position: "relative",
+            display: "flex",
+            justifyContent: "center",
+            width: "100%",
+            ["--dim" as string]: dim.toFixed(2),
+            ["--lit" as string]: dim.toFixed(2),
+            ["--lamp-glow" as string]: item.glow ?? "#ffdb8c",
+          }}
+        >
+          <div
+            style={{
+              position: "relative",
+              aspectRatio: "2 / 3",
+              height: "min(38vh, 275px)",
+              transformOrigin: "top center",
+            }}
+          >
+            {/* Hanging Cord */}
+            <span
+              aria-hidden="true"
+              style={{
+                pointerEvents: "none",
+                position: "absolute",
+                left: 0,
+                right: 0,
+                top: "-60vh",
+                height: "calc(60vh + 2px)",
+                transformOrigin: "top",
+                background: CORD_BG,
+                transform: `scaleX(${CORD_W})`,
+              }}
+            />
+            {/* Radial Glow Pool */}
+            <span
+              aria-hidden="true"
+              style={{
+                pointerEvents: "none",
+                position: "absolute",
+                borderRadius: 9999,
+                left: "-48%",
+                width: "196%",
+                top: "40%",
+                height: "96%",
+                background: POOL_BG,
+                opacity: "calc(var(--dim) * var(--pool-k))",
+                mixBlendMode: "multiply",
+              }}
+            />
+            {/* Conic Light Beam */}
+            <span
+              aria-hidden="true"
+              style={{
+                pointerEvents: "none",
+                position: "absolute",
+                left: "-100%",
+                width: "300%",
+                top: "30%",
+                height: "150%",
+                opacity: "calc(var(--dim) * var(--beam-k))",
+                background: `conic-gradient(from 140deg at 50% 0%, transparent 0deg, ${BEAM_GLOW} 24deg, ${BEAM_GLOW} 56deg, transparent 80deg)`,
+                WebkitMaskImage:
+                  "linear-gradient(to bottom, transparent 27%, black 40%, black 62%, transparent)",
+                maskImage:
+                  "linear-gradient(to bottom, transparent 27%, black 40%, black 62%, transparent)",
+                mixBlendMode: "multiply",
+              }}
+            />
+            {/* Swaying Lamp Photo */}
+            <div
+              ref={swayRef}
+              style={{
+                position: "absolute",
+                inset: 0,
+                transformOrigin: "top center",
+                ["--bloom-r" as string]: "18px",
+              }}
+            >
+              {item.imageOn && (
+                <img
+                  src={item.imageOn}
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                  style={{
+                    pointerEvents: "none",
+                    position: "absolute",
+                    inset: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                    objectPosition: "top",
+                    opacity: "calc(var(--lit, 0) * var(--bloom-k))",
+                    filter: "blur(18px) saturate(1.35) brightness(1.1)",
+                  }}
+                />
+              )}
+              <img
+                src={item.image}
+                alt=""
+                draggable={false}
+                style={{
+                  pointerEvents: "none",
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                  objectPosition: "top",
+                }}
+              />
+              {item.imageOn && (
+                <img
+                  src={item.imageOn}
+                  alt=""
+                  draggable={false}
+                  style={{
+                    pointerEvents: "none",
+                    position: "absolute",
+                    inset: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                    objectPosition: "top",
+                    opacity: "var(--lit, 0)",
+                  }}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Info & Controls below Lamp */}
+        <div
+          style={{
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            gap: 14,
+            textAlign: "center",
+            opacity: shown ? 1 : 0,
+            transform: shown ? "translateY(0)" : "translateY(8px)",
+            transition: "opacity 380ms ease, transform 380ms ease",
+          }}
+        >
+          {/* 08 / 08 Counter */}
+          <p
+            style={{
+              margin: 0,
+              fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+              fontSize: 11,
+              letterSpacing: "0.22em",
+              color: "#768770",
+            }}
+          >
+            {String(index + 1).padStart(2, "0")} /{" "}
+            {String(total).padStart(2, "0")}
+          </p>
+
+          {/* Title & Description */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <h3
+              style={{
+                margin: 0,
+                fontSize: 24,
+                fontWeight: 600,
+                letterSpacing: "-0.02em",
+                color: "#1f2e25",
+              }}
+            >
+              {item.name}
+            </h3>
+            {item.description && (
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 13.5,
+                  lineHeight: 1.55,
+                  color: "#6b7466",
+                }}
+              >
+                {item.description}
+              </p>
+            )}
+          </div>
+
+          {/* Detail Pills */}
+          {item.details.length > 0 && (
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                justifyContent: "center",
+                gap: 8,
+              }}
+            >
+              {item.details.map((detail) => (
+                <span
+                  key={detail}
+                  style={{
+                    borderRadius: 9999,
+                    border: "1px solid #dfdcd2",
+                    backgroundColor: "rgba(255, 255, 255, 0.45)",
+                    padding: "4px 12px",
+                    fontSize: 11.5,
+                    color: "#6b7466",
+                  }}
+                >
+                  {detail}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Continuous Dimmer Slider Card ("Độ sáng" + range slider) */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+              borderRadius: 16,
+              border: "1px solid #e2dfd5",
+              backgroundColor: "rgba(255, 255, 255, 0.65)",
+              padding: "14px 16px",
+              textAlign: "left",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                fontSize: 12,
+              }}
+            >
+              <span style={{ fontWeight: 500, color: "#6b7466" }}>Độ sáng</span>
+              <span
+                style={{
+                  fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                  fontWeight: 600,
+                  color: "#1f2e25",
+                }}
+              >
+                {percent}%
+              </span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={1}
+              value={percent}
+              aria-label="Độ sáng"
+              onChange={(e) => onDim(Number(e.currentTarget.value) / 100)}
+              style={{
+                width: "100%",
+                height: 20,
+                cursor: "pointer",
+                accentColor: "#2f6f5e",
+                outline: "none",
+              }}
+            />
+          </div>
+
+          {/* Action Buttons Row (Price pill + Xem chi tiết sản phẩm + Mua ngay trên Shopee ↗) */}
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10,
+            }}
+          >
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                borderRadius: 9999,
+                border: "1px solid #e2dfd5",
+                backgroundColor: "#ffffff",
+                padding: "7px 14px",
+                fontSize: 13.5,
+                fontWeight: 700,
+                color: "#1f2e25",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+              }}
+            >
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: 9999,
+                  backgroundColor: "#2f6f5e",
+                }}
+              />
+              {item.tag}
+            </span>
+
+            <button
+              type="button"
+              onClick={() => onOpenProduct(item.productId)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                borderRadius: 9999,
+                backgroundColor: "#2f6f5e",
+                color: "#ffffff",
+                padding: "8px 16px",
+                fontSize: 12,
+                fontWeight: 600,
+                border: "none",
+                cursor: "pointer",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
+              }}
+            >
+              Xem chi tiết sản phẩm
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onOpenShopee(item.productLink)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                borderRadius: 9999,
+                border: "1px solid rgba(47, 111, 94, 0.3)",
+                backgroundColor: "#ffffff",
+                color: "#2f6f5e",
+                padding: "7px 16px",
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: "pointer",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+              }}
+            >
+              Mua ngay trên Shopee ↗
+            </button>
+          </div>
+
+          {/* Bottom Real Product Card ("ẢNH SẢN PHẨM THỰC TẾ") */}
+          {item.productImage && (
+            <div
+              onClick={() => onOpenProduct(item.productId)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                borderRadius: 16,
+                border: "1px solid #e2dfd5",
+                backgroundColor: "rgba(255, 255, 255, 0.85)",
+                padding: 12,
+                textAlign: "left",
+                cursor: "pointer",
+              }}
+            >
+              <img
+                src={item.productImage}
+                alt={item.name}
+                style={{
+                  width: 56,
+                  height: 56,
+                  flexShrink: 0,
+                  borderRadius: 12,
+                  border: "1px solid #e2dfd5",
+                  objectFit: "cover",
+                }}
+              />
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 10.5,
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    color: "#6b7466",
+                  }}
+                >
+                  Ảnh sản phẩm thực tế
+                </p>
+                <p
+                  style={{
+                    margin: "2px 0 0",
+                    fontSize: 12.5,
+                    fontWeight: 700,
+                    color: "#1f2e25",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {item.name}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function buildNativeDetailHtml(
+  item: PendantLamp,
+  index: number,
+  total: number,
+  initialDim: number,
+): string {
+  const serialized = JSON.stringify({ item, index, total, initialDim });
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    background: rgba(248, 246, 240, 0.96);
+    color: #1f2e25;
+    font-family: system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+  }
+  .wrap {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 20px 36px;
+    --lamp-glow: ${item.glow ?? "#ffdb8c"};
+    --lamp-accent: #2f6f5e;
+    --pool-k: 0.85;
+    --beam-k: 0.42;
+    --bloom-k: 0.22;
+  }
+  .close-btn {
+    position: fixed;
+    right: 18px;
+    top: 18px;
+    z-index: 30;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 9999px;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #6b7466;
+    background: rgba(248, 246, 240, 0.8);
+    border: none;
+  }
+  @keyframes gentleSway {
+    0% { transform: rotate(0deg); }
+    22% { transform: rotate(2.2deg); }
+    50% { transform: rotate(-1.3deg); }
+    76% { transform: rotate(0.6deg); }
+    100% { transform: rotate(0deg); }
+  }
+  .sway {
+    position: absolute;
+    inset: 0;
+    transform-origin: top center;
+    animation: gentleSway 1700ms ease-in-out 100ms 1;
+  }
+  input[type=range] {
+    width: 100%;
+    height: 22px;
+    accent-color: #2f6f5e;
+  }
+</style>
+</head>
+<body>
+<div class="wrap" id="scene">
+  <button type="button" class="close-btn" id="closeBtn">
+    <span>Đóng</span>
+    <svg viewBox="0 0 16 16" style="width:14px;height:14px" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
+  </button>
+  <div style="width:100%;max-width:420px;display:flex;flex-direction:column;align-items:center;gap:18px;">
+    <div id="lampScene" style="position:relative;display:flex;justify-content:center;width:100%;">
+      <div style="position:relative;aspect-ratio:2/3;height:min(38vh,265px);transform-origin:top center;">
+        <span style="pointer-events:none;position:absolute;left:0;right:0;top:-60vh;height:calc(60vh + 2px);transform-origin:top;background:linear-gradient(to right,#454545,#4f4f4f 10%,#4f4f4f 20%,#464646 30%,#333333 40%,#252525 50%,#262626 60%,#303030 70%,#3b3b3b 80%,#3d3d3d 90%,#3b3b3b);transform:scaleX(0.02)"></span>
+        <span style="pointer-events:none;position:absolute;border-radius:9999px;left:-48%;width:196%;top:40%;height:96%;background:radial-gradient(closest-side,color-mix(in oklab,var(--lamp-glow,#ffd98a) 88%,transparent),color-mix(in oklab,var(--lamp-glow,#ffd98a) 36%,transparent) 48%,transparent);opacity:calc(var(--dim,1)*var(--pool-k));mix-blend-mode:multiply"></span>
+        <span style="pointer-events:none;position:absolute;left:-100%;width:300%;top:30%;height:150%;opacity:calc(var(--dim,1)*var(--beam-k));background:conic-gradient(from 140deg at 50% 0%,transparent 0deg,color-mix(in oklab,var(--lamp-glow,#ffd98a) 72%,transparent) 24deg,color-mix(in oklab,var(--lamp-glow,#ffd98a) 72%,transparent) 56deg,transparent 80deg);-webkit-mask-image:linear-gradient(to bottom,transparent 27%,black 40%,black 62%,transparent);mask-image:linear-gradient(to bottom,transparent 27%,black 40%,black 62%,transparent);mix-blend-mode:multiply"></span>
+        <div class="sway">
+          <img id="imgBloom" alt="" draggable="false" style="pointer-events:none;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:top;opacity:calc(var(--dim,1)*var(--bloom-k));filter:blur(18px) saturate(1.35) brightness(1.1)" />
+          <img id="imgOff" alt="" draggable="false" style="pointer-events:none;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:top" />
+          <img id="imgOn" alt="" draggable="false" style="pointer-events:none;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:top;opacity:var(--dim,1)" />
+        </div>
+      </div>
+    </div>
+
+    <div style="width:100%;display:flex;flex-direction:column;gap:14px;text-align:center;">
+      <p id="counter" style="margin:0;font-family:ui-monospace,monospace;font-size:11px;letter-spacing:0.22em;color:#768770;"></p>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <h3 id="title" style="margin:0;font-size:24px;font-weight:600;letter-spacing:-0.02em;color:#1f2e25;"></h3>
+        <p id="desc" style="margin:0;font-size:13.5px;line-height:1.55;color:#6b7466;"></p>
+      </div>
+      <div id="pills" style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;"></div>
+      <div style="display:flex;flex-direction:column;gap:8px;border-radius:16px;border:1px solid #e2dfd5;background:rgba(255,255,255,0.65);padding:14px 16px;text-align:left;">
+        <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;">
+          <span style="font-weight:500;color:#6b7466;">Độ sáng</span>
+          <span id="pct" style="font-family:ui-monospace,monospace;font-weight:600;color:#1f2e25;">100%</span>
+        </div>
+        <input id="slider" type="range" min="0" max="100" step="1" value="100" />
+      </div>
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;">
+        <span style="display:inline-flex;align-items:center;gap:8px;border-radius:9999px;border:1px solid #e2dfd5;background:#fff;padding:7px 14px;font-size:13.5px;font-weight:700;color:#1f2e25;box-shadow:0 1px 2px rgba(0,0,0,0.04);">
+          <span style="width:6px;height:6px;border-radius:9999px;background:#2f6f5e;"></span>
+          <span id="priceTag"></span>
+        </span>
+        <button type="button" id="btnProduct" style="display:inline-flex;align-items:center;gap:6px;border-radius:9999px;background:#2f6f5e;color:#fff;padding:8px 16px;font-size:12px;font-weight:600;border:none;box-shadow:0 1px 2px rgba(0,0,0,0.08);">Xem chi tiết sản phẩm</button>
+        <button type="button" id="btnShopee" style="display:inline-flex;align-items:center;gap:6px;border-radius:9999px;border:1px solid rgba(47,111,94,0.3);background:#fff;color:#2f6f5e;padding:7px 16px;font-size:12px;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,0.04);">Mua ngay trên Shopee ↗</button>
+      </div>
+      <div id="realCard" style="display:flex;align-items:center;gap:12px;border-radius:16px;border:1px solid #e2dfd5;background:rgba(255,255,255,0.85);padding:12px;text-align:left;">
+        <img id="realThumb" alt="" style="width:56px;height:56px;flex-shrink:0;border-radius:12px;border:1px solid #e2dfd5;object-fit:cover;" />
+        <div style="min-width:0;flex:1;">
+          <p style="margin:0;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#6b7466;">Ảnh sản phẩm thực tế</p>
+          <p id="realName" style="margin:2px 0 0;font-size:12.5px;font-weight:700;color:#1f2e25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const DATA = ${serialized};
+const { item, index, total, initialDim } = DATA;
+const lampScene = document.getElementById("lampScene");
+document.getElementById("imgOff").src = item.image;
+document.getElementById("imgOn").src = item.imageOn;
+document.getElementById("imgBloom").src = item.imageOn;
+document.getElementById("counter").textContent = String(index + 1).padStart(2, "0") + " / " + String(total).padStart(2, "0");
+document.getElementById("title").textContent = item.name;
+document.getElementById("desc").textContent = item.description || "";
+document.getElementById("priceTag").textContent = item.tag;
+document.getElementById("realThumb").src = item.productImage;
+document.getElementById("realName").textContent = item.name;
+
+const pills = document.getElementById("pills");
+(item.details || []).forEach(d => {
+  const s = document.createElement("span");
+  s.style.cssText = "border-radius:9999px;border:1px solid #dfdcd2;background:rgba(255,255,255,0.45);padding:4px 12px;font-size:11.5px;color:#6b7466;";
+  s.textContent = d;
+  pills.appendChild(s);
+});
+
+const slider = document.getElementById("slider");
+const pct = document.getElementById("pct");
+function setDimVal(d) {
+  const p = Math.round(d * 100);
+  slider.value = String(p);
+  pct.textContent = p + "%";
+  lampScene.style.setProperty("--dim", d.toFixed(2));
+}
+setDimVal(initialDim);
+slider.addEventListener("input", e => {
+  const val = Number(e.target.value) / 100;
+  setDimVal(val);
+  window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({ type: "dim", value: val }));
+});
+
+function post(obj) {
+  window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(obj));
+}
+document.getElementById("closeBtn").onclick = () => post({ type: "close" });
+document.getElementById("btnProduct").onclick = () => post({ type: "product", productId: item.productId });
+document.getElementById("realCard").onclick = () => post({ type: "product", productId: item.productId });
+document.getElementById("btnShopee").onclick = () => post({ type: "shopee", url: item.productLink });
+</script>
+</body>
+</html>`;
+}
+
 export function PendantLampRail({ products }: { products?: Product[] }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [dims, setDims] = useState<number[]>(() =>
@@ -1776,13 +2490,40 @@ export function PendantLampRail({ products }: { products?: Product[] }) {
   const openDim = openIndex !== null ? (dims[openIndex] ?? 1) : 1;
   const count = items.length;
 
+  const handleOpenLamp = React.useCallback((idx: number) => {
+    setDims((prev) =>
+      prev.map((d, i) => (i === idx && d === 0 ? 1 : d)),
+    );
+    setOpenIndex(idx);
+  }, []);
+
+  const handleDim = React.useCallback(
+    (val: number) => {
+      if (openIndex === null) return;
+      setDims((prev) => prev.map((d, i) => (i === openIndex ? val : d)));
+    },
+    [openIndex],
+  );
+
+  const handleOpenProduct = React.useCallback((productId: string) => {
+    setOpenIndex(null);
+    router.push({
+      pathname: "/products/[id]",
+      params: { id: productId },
+    });
+  }, []);
+
+  const handleOpenShopee = React.useCallback((url: string) => {
+    void WebBrowser.openBrowserAsync(url);
+  }, []);
+
   return (
     <View style={{ width: "100%", backgroundColor: "#f8f6f0" }}>
       {Platform.OS === "web" ? (
         <WebPendantLampRail
           items={items}
           dims={dims}
-          onOpenLamp={(idx) => setOpenIndex(idx)}
+          onOpenLamp={handleOpenLamp}
         />
       ) : (
         <View style={{ width: "100%", height: webViewHeight }}>
@@ -1803,7 +2544,7 @@ export function PendantLampRail({ products }: { products?: Product[] }) {
                   msg.type === "open" &&
                   typeof msg.index === "number"
                 ) {
-                  setOpenIndex(msg.index);
+                  handleOpenLamp(msg.index);
                 }
               } catch {}
             }}
@@ -1811,7 +2552,7 @@ export function PendantLampRail({ products }: { products?: Product[] }) {
         </View>
       )}
 
-      {/* Detail & Dimmer Modal */}
+      {/* Full-Screen Hanging Lamp Detail & Dimmer (matching Web 100%) */}
       <Modal
         visible={openItem !== null}
         transparent
@@ -1819,330 +2560,58 @@ export function PendantLampRail({ products }: { products?: Product[] }) {
         onRequestClose={() => setOpenIndex(null)}
       >
         {openItem && openIndex !== null && (
-          <View style={styles.modalBackdrop}>
-            <ScrollView
-              contentContainerStyle={styles.modalScroll}
-              showsVerticalScrollIndicator={false}
-            >
-              <View style={styles.modalCard}>
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalCounter}>
-                    {String(openIndex + 1).padStart(2, "0")} /{" "}
-                    {String(count).padStart(2, "0")}
-                  </Text>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Đóng"
-                    onPress={() => setOpenIndex(null)}
-                    style={styles.closeBtn}
-                  >
-                    <Text style={styles.closeBtnText}>Đóng</Text>
-                    <Icon name="close" size={16} color={colors.ink} />
-                  </Pressable>
-                </View>
-
-                <View style={styles.dimmerBox}>
-                  <View style={styles.dimmerHeader}>
-                    <Text style={styles.dimmerLabel}>Độ sáng (Dimmer)</Text>
-                    <Text style={styles.dimmerPercent}>
-                      {Math.round(openDim * 100)}%
-                    </Text>
-                  </View>
-                  <View style={styles.dimmerPresets}>
-                    {[0, 0.25, 0.5, 0.75, 1].map((val) => {
-                      const selected = Math.abs(openDim - val) < 0.12;
-                      return (
-                        <Pressable
-                          key={val}
-                          onPress={() =>
-                            setDims((prev) =>
-                              prev.map((d, idx) =>
-                                idx === openIndex ? val : d,
-                              ),
-                            )
-                          }
-                          style={[
-                            styles.dimmerChip,
-                            selected && styles.dimmerChipActive,
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.dimmerChipText,
-                              selected && styles.dimmerChipTextActive,
-                            ]}
-                          >
-                            {Math.round(val * 100)}%
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                </View>
-
-                <Text style={styles.modalTitle}>{openItem.name}</Text>
-                <Text style={styles.modalDesc}>{openItem.description}</Text>
-
-                <View style={styles.detailTagsRow}>
-                  {openItem.details.map((d) => (
-                    <View key={d} style={styles.detailPill}>
-                      <Text style={styles.detailPillText}>{d}</Text>
-                    </View>
-                  ))}
-                </View>
-
-                <View style={styles.realProductRow}>
-                  <Image
-                    source={{ uri: openItem.productImage }}
-                    style={styles.realProductThumb}
-                  />
-                  <View style={{ flex: 1, gap: 2 }}>
-                    <Text style={styles.realProductEyebrow}>
-                      ẢNH SẢN PHẨM THỰC TẾ
-                    </Text>
-                    <Text numberOfLines={1} style={styles.realProductName}>
-                      {openItem.name}
-                    </Text>
-                    <Text style={styles.realProductPrice}>{openItem.tag}</Text>
-                  </View>
-                </View>
-
-                <View style={styles.modalActions}>
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={() => {
-                      const pid = openItem.productId;
+          Platform.OS === "web" ? (
+            <WebLampDetail
+              item={openItem}
+              index={openIndex}
+              total={count}
+              dim={openDim}
+              onDim={handleDim}
+              onClose={() => setOpenIndex(null)}
+              onOpenProduct={handleOpenProduct}
+              onOpenShopee={handleOpenShopee}
+            />
+          ) : (
+            <View style={{ flex: 1, backgroundColor: "#f8f6f0" }}>
+              <WebView
+                originWhitelist={["*"]}
+                source={{
+                  html: buildNativeDetailHtml(
+                    openItem,
+                    openIndex,
+                    count,
+                    openDim,
+                  ),
+                }}
+                style={{ flex: 1, backgroundColor: "transparent" }}
+                onMessage={(e) => {
+                  try {
+                    const msg = JSON.parse(e.nativeEvent.data);
+                    if (msg.type === "close") {
                       setOpenIndex(null);
-                      router.push({
-                        pathname: "/products/[id]",
-                        params: { id: pid },
-                      });
-                    }}
-                    style={styles.primaryActionBtn}
-                  >
-                    <Text style={styles.primaryActionText}>
-                      Xem chi tiết sản phẩm
-                    </Text>
-                  </Pressable>
-
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={() =>
-                      void WebBrowser.openBrowserAsync(openItem.productLink)
+                    } else if (
+                      msg.type === "dim" &&
+                      typeof msg.value === "number"
+                    ) {
+                      handleDim(msg.value);
+                    } else if (
+                      msg.type === "product" &&
+                      typeof msg.productId === "string"
+                    ) {
+                      handleOpenProduct(msg.productId);
+                    } else if (
+                      msg.type === "shopee" &&
+                      typeof msg.url === "string"
+                    ) {
+                      handleOpenShopee(msg.url);
                     }
-                    style={styles.secondaryActionBtn}
-                  >
-                    <Text style={styles.secondaryActionText}>
-                      Mua ngay trên Shopee ↗
-                    </Text>
-                  </Pressable>
-                </View>
-              </View>
-            </ScrollView>
-          </View>
+                  } catch {}
+                }}
+              />
+            </View>
+          )
         )}
       </Modal>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(23, 33, 27, 0.65)",
-    justifyContent: "center",
-    padding: 18,
-  },
-  modalScroll: {
-    flexGrow: 1,
-    justifyContent: "center",
-  },
-  modalCard: {
-    backgroundColor: "#fbf9f4",
-    borderRadius: 26,
-    padding: 20,
-    gap: 14,
-    borderWidth: 1,
-    borderColor: colors.line,
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  modalCounter: {
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1.6,
-    color: colors.muted,
-    fontFamily: fontFamilies.heading,
-  },
-  closeBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: "#eef2e7",
-  },
-  closeBtnText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: colors.ink,
-    fontFamily: fontFamilies.heading,
-  },
-  dimmerBox: {
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
-    padding: 12,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: colors.line,
-  },
-  dimmerHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  dimmerLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: colors.muted,
-    fontFamily: fontFamilies.body,
-  },
-  dimmerPercent: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: colors.ink,
-    fontFamily: fontFamilies.heading,
-  },
-  dimmerPresets: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  dimmerChip: {
-    flex: 1,
-    paddingVertical: 7,
-    borderRadius: 10,
-    backgroundColor: "#f3f0e6",
-    alignItems: "center",
-  },
-  dimmerChipActive: {
-    backgroundColor: colors.green,
-  },
-  dimmerChipText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: colors.ink,
-    fontFamily: fontFamilies.heading,
-  },
-  dimmerChipTextActive: {
-    color: "#ffffff",
-  },
-  modalTitle: {
-    fontSize: 21,
-    fontWeight: "700",
-    color: colors.ink,
-    fontFamily: fontFamilies.heading,
-  },
-  modalDesc: {
-    fontSize: 13,
-    lineHeight: 20,
-    color: colors.muted,
-    fontFamily: fontFamilies.body,
-  },
-  detailTagsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-  },
-  detailPill: {
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: "#ffffff",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  detailPillText: {
-    fontSize: 11,
-    color: colors.muted,
-    fontFamily: fontFamilies.body,
-  },
-  realProductRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    padding: 10,
-    borderRadius: 16,
-    backgroundColor: "#ffffff",
-    borderWidth: 1,
-    borderColor: colors.line,
-  },
-  realProductThumb: {
-    width: 54,
-    height: 54,
-    borderRadius: 12,
-    backgroundColor: "#f2efe6",
-  },
-  realProductEyebrow: {
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 0.8,
-    color: colors.muted,
-    fontFamily: fontFamilies.heading,
-  },
-  realProductName: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: colors.ink,
-    fontFamily: fontFamilies.heading,
-  },
-  realProductPrice: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: colors.green,
-    fontFamily: fontFamilies.heading,
-  },
-  modalActions: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    marginTop: 2,
-  },
-  primaryActionBtn: {
-    flex: 1,
-    minWidth: 140,
-    backgroundColor: colors.green,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 999,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  primaryActionText: {
-    color: "#ffffff",
-    fontSize: 13,
-    fontWeight: "700",
-    fontFamily: fontFamilies.heading,
-  },
-  secondaryActionBtn: {
-    flex: 1,
-    minWidth: 140,
-    backgroundColor: "#ffffff",
-    borderWidth: 1,
-    borderColor: colors.green,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 999,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  secondaryActionText: {
-    color: colors.green,
-    fontSize: 13,
-    fontWeight: "700",
-    fontFamily: fontFamilies.heading,
-  },
-});
