@@ -272,7 +272,7 @@ export default function Explore() {
               <Icon name="chevron-forward" size={16} color={colors.ink} />
             </Pressable>
           </View>
-        ) : null
+        ) : undefined
       }
       renderItem={({ item }) => (
         <View style={{ width: cardWidth }}>
