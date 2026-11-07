@@ -1,8 +1,6 @@
-import { ImageBackground, Pressable, Text, View } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
+import { Pressable, Text, View } from "react-native";
 import { router } from "expo-router";
 import {
-  Button,
   colors,
   Icon,
   MenuLink,
@@ -13,6 +11,7 @@ import {
   Section,
   State,
 } from "../../components/ui";
+import { PendantLampRail } from "../../components/PendantLampRail";
 import { useResource } from "../../lib/hooks";
 import { list } from "../../lib/client";
 import { idOf, type Board, type Product } from "../../lib/types";
@@ -36,33 +35,7 @@ export default function Home() {
         </View>
         <Icon name="arrow-forward" size={18} />
       </Pressable>
-      <ImageBackground
-        source={require("../../../assets/home-room.png")}
-        style={{ minHeight: 350, borderRadius: 28, overflow: "hidden" }}
-      >
-        <LinearGradient
-          colors={["transparent", "rgba(16,42,31,0.88)"]}
-          style={{ flex: 1, justifyContent: "flex-end", padding: 24, gap: 13 }}
-        >
-          <Text style={[s.label, { color: colors.lime }]}>
-            NHÀ LÀ NƠI BẠN LÀ CHÍNH MÌNH
-          </Text>
-          <Text
-            style={[s.title, { color: "#fff", fontSize: 34, lineHeight: 40 }]}
-          >
-            Chạm cảm hứng.{"\n"}Tạo tổ ấm.
-          </Text>
-          <Text style={{ color: "#e9eee7", fontSize: 14, lineHeight: 21 }}>
-            Những món đồ đẹp, những ý tưởng hay.{"\n"}Tất cả bắt đầu từ không
-            gian của bạn.
-          </Text>
-          <Button
-            title="Khám phá ngay  ↗"
-            light
-            onPress={() => router.push("/explore")}
-          />
-        </LinearGradient>
-      </ImageBackground>
+      <PendantLampRail products={products.data} />
       <View style={{ flexDirection: "row", gap: 10 }}>
         {(
           [
