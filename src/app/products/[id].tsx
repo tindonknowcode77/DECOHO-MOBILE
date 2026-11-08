@@ -493,7 +493,7 @@ export default function ProductDetail() {
           />
         </View>
         {!!action.error && (
-          <Text style={{ fontSize: 13, color: colors.danger }}>
+          <Text style={{ fontSize: 13, color: "#b3261e" }}>
             {action.error}
           </Text>
         )}
