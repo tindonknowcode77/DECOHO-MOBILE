@@ -14,7 +14,7 @@
     },
     "android": {
       "package": "com.decoho.mobile",
-      "versionCode": 1,
+      "versionCode": 4,
       "icon": "./assets/decoho-icon.png",
       "adaptiveIcon": {
         "foregroundImage": "./assets/android-icon-foreground.png",
