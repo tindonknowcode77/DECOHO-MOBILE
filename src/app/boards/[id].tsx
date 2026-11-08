@@ -80,9 +80,11 @@ export default function BoardDetail() {
         />
         {points.map((point, i) => {
           const isSelected = selectedPointIndex === i;
+          const dotSize = isSelected ? 18 : 13;
           return (
             <Pressable
               key={point._id ?? i}
+              hitSlop={10}
               accessibilityRole="button"
               accessibilityLabel={`Xem sản phẩm ${i + 1}`}
               onPress={() => setSelectedPointIndex(isSelected ? null : i)}
@@ -90,37 +92,28 @@ export default function BoardDetail() {
                 position: "absolute",
                 left: `${Math.max(0, Math.min(100, point.x))}%`,
                 top: `${Math.max(0, Math.min(100, point.y))}%`,
-                transform: [{ translateX: -20 }, { translateY: -20 }],
-                width: 40,
-                height: 40,
-                borderRadius: 20,
-                backgroundColor: isSelected ? colors.green : "#ffffffea",
-                alignItems: "center",
-                justifyContent: "center",
-                borderWidth: isSelected ? 3 : 2,
-                borderColor: isSelected ? "#fff" : colors.green,
+                transform: [
+                  { translateX: -dotSize / 2 },
+                  { translateY: -dotSize / 2 },
+                ],
+                width: dotSize,
+                height: dotSize,
+                borderRadius: dotSize / 2,
+                backgroundColor: isSelected ? colors.green : "#ef6e61",
+                borderWidth: 2,
+                borderColor: "#ffffff",
                 shadowColor: "#000",
-                shadowOpacity: isSelected ? 0.35 : 0.15,
-                shadowRadius: 6,
+                shadowOpacity: isSelected ? 0.35 : 0.22,
+                shadowRadius: 4,
                 elevation: isSelected ? 6 : 3,
                 zIndex: isSelected ? 10 : 2,
               }}
-            >
-              <Text
-                style={{
-                  color: isSelected ? "#fff" : colors.green,
-                  fontWeight: "800",
-                  fontSize: 13,
-                }}
-              >
-                {i + 1}
-              </Text>
-            </Pressable>
+            />
           );
         })}
       </View>
       <Text style={s.muted}>
-        Chạm vào điểm ghim số trên ảnh để xem nhanh thông tin món đồ.
+        Chạm vào chấm tròn trên ảnh để xem nhanh thông tin món đồ.
       </Text>
 
       {/* Thẻ xem nhanh món đồ được chạm (Quick preview active pin) */}
