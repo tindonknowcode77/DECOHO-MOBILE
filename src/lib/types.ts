@@ -22,8 +22,21 @@ export type Product = {
   brand?: string;
   material?: string;
   color?: string;
+  dimensions?:
+    | {
+        length?: string;
+        width?: string;
+        height?: string;
+      }
+    | string;
+  weight?: string;
+  origin?: string;
+  warranty?: string;
   description?: string;
+  tags?: string[];
   styleTags?: string[];
+  ecommercePlatform?: string;
+  productLink?: string;
   rating?: number;
   reviews?: number;
 };
