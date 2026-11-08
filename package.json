@@ -44,7 +44,9 @@
     "test:smoke": "node scripts/smoke.cjs",
     "typecheck": "tsc --noEmit",
     "doctor": "npx expo-doctor",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "build:android:apk": "npx eas-cli build --platform android --profile preview",
+    "build:android:aab": "npx eas-cli build --platform android --profile production"
   },
   "private": true
 }
