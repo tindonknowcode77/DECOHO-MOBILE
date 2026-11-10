@@ -35,14 +35,14 @@ export const colors = {
 
 export const fontFamilies = {
   body: Platform.select({
-    web: 'Calibri, Carlito, "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif',
+    web: '"Be Vietnam Pro", Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
     ios: "System",
     android: "sans-serif",
   }),
   heading: Platform.select({
-    web: 'Calibri, Carlito, "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif',
-    ios: "System",
-    android: "sans-serif",
+    web: 'Lora, Georgia, "Times New Roman", serif',
+    ios: "Georgia",
+    android: "serif",
   }),
 };
 
