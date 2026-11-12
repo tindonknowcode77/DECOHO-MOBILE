@@ -1,8 +1,15 @@
+import { useEffect } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import * as Font from "expo-font";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { StoreProvider } from "../lib/store";
 import { colors, fontFamilies } from "../components/ui";
 export default function RootLayout() {
+  useEffect(() => {
+    void Font.loadAsync(Ionicons.font).catch(() => {});
+  }, []);
+
   return (
     <StoreProvider>
       <StatusBar style="dark" />

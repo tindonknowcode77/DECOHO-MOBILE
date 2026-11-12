@@ -1,5 +1,5 @@
 import Constants, { ExecutionEnvironment } from "expo-constants";
-import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, TurboModuleRegistry, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as Linking from "expo-linking";
@@ -92,8 +92,11 @@ export function GoogleLogin({ title = "Tiếp tục với Google" }: { title?: s
       return;
     }
 
-    // 1. Chạy trên Expo Go -> Dùng WebBrowser AuthSession mượt mà, không bị chặn
-    if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) {
+    // 1. Expo Go / Dev Build chưa cài native RNGoogleSignin -> Dùng WebBrowser AuthSession
+    const hasNativeGoogleSignin =
+      Constants.executionEnvironment !== ExecutionEnvironment.StoreClient &&
+      Boolean(TurboModuleRegistry.get("RNGoogleSignin"));
+    if (!hasNativeGoogleSignin) {
       await loginViaWebBrowser();
       return;
     }
