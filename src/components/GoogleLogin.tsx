@@ -2,6 +2,7 @@ import Constants, { ExecutionEnvironment } from "expo-constants";
 import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import { useAction } from "../lib/hooks";
 import { useStore } from "../lib/store";
@@ -39,7 +40,7 @@ export function GoogleLogin({ title = "Tiếp tục với Google" }: { title?: s
 
   async function loginViaWebBrowser() {
     const webUrl = (process.env.EXPO_PUBLIC_WEB_URL || "https://decoho-fe.vercel.app").replace(/\/$/, "");
-    const redirectScheme = "decoho://auth/callback";
+    const redirectScheme = Linking.createURL("auth/callback");
     const authUrl = `${webUrl}/login?mobileRedirect=${encodeURIComponent(redirectScheme)}`;
 
     const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectScheme);
@@ -97,10 +98,16 @@ export function GoogleLogin({ title = "Tiếp tục với Google" }: { title?: s
       return;
     }
 
-    // 2. Chạy trên file APK / Development Build -> Dùng Native Google Sign-in
+    // 2. Chạy trên file APK / AAB / Development Build -> Dùng Native Google Sign-in
+    let idToken: string | undefined;
     try {
-      const { GoogleSignin, isSuccessResponse } =
-        await import("@react-native-google-signin/google-signin");
+      const {
+        GoogleSignin,
+        isErrorWithCode,
+        isSuccessResponse,
+        statusCodes,
+      } = await import("@react-native-google-signin/google-signin");
+
       GoogleSignin.configure({
         webClientId: clientId,
         iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
@@ -108,19 +115,40 @@ export function GoogleLogin({ title = "Tiếp tục với Google" }: { title?: s
       await GoogleSignin.hasPlayServices({
         showPlayServicesUpdateDialog: true,
       });
-      const response = await GoogleSignin.signIn();
-      if (!isSuccessResponse(response)) return;
-      if (!response.data?.idToken) {
+
+      try {
+        const response = await GoogleSignin.signIn();
+        if (!isSuccessResponse(response)) return;
+        idToken = response.data?.idToken ?? undefined;
+      } catch (nativeErr) {
+        if (isErrorWithCode(nativeErr)) {
+          if (nativeErr.code === statusCodes.SIGN_IN_CANCELLED) return;
+          if (nativeErr.code === statusCodes.IN_PROGRESS) return;
+          if (nativeErr.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+            throw new Error(
+              "Thiết bị chưa có hoặc cần cập nhật Google Play Services để đăng nhập.",
+            );
+          }
+        }
+        console.warn("Native Google login failed:", nativeErr);
         throw new Error(
-          "Google chưa trả về thông tin đăng nhập. Vui lòng thử lại.",
+          "Không thể xác thực Google trên ứng dụng. Vui lòng thử lại sau.",
         );
       }
-      await store.googleLogin(response.data.idToken);
-      router.replace("/account");
-    } catch (nativeErr: any) {
-      console.warn("Native Google login failed, using WebBrowser fallback:", nativeErr);
-      await loginViaWebBrowser();
+    } catch (err) {
+      throw err instanceof Error
+        ? err
+        : new Error("Không thể khởi tạo đăng nhập Google. Vui lòng thử lại.");
     }
+
+    if (!idToken) {
+      throw new Error(
+        "Google chưa trả về thông tin đăng nhập. Vui lòng thử lại.",
+      );
+    }
+
+    await store.googleLogin(idToken);
+    router.replace("/account");
   }
 
   return (
