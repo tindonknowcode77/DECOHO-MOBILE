@@ -9,6 +9,18 @@ import { useStore } from "../lib/store";
 
 import { colors, fontFamilies } from "./ui";
 
+WebBrowser.maybeCompleteAuthSession();
+
+function extractTokensFromUrl(url: string): { accessToken: string; refreshToken: string } | null {
+  const normalized = url.replace("#", "?");
+  const queryIdx = normalized.indexOf("?");
+  if (queryIdx === -1) return null;
+  const params = new URLSearchParams(normalized.slice(queryIdx + 1));
+  const accessToken = params.get("accessToken")?.trim() ?? "";
+  const refreshToken = params.get("refreshToken")?.trim() ?? "";
+  return accessToken ? { accessToken, refreshToken } : null;
+}
+
 function loadWebGoogleScript(): Promise<void> {
   return new Promise((resolve, reject) => {
     if (typeof window === "undefined") return resolve();
@@ -43,25 +55,27 @@ export function GoogleLogin({ title = "Tiếp tục với Google" }: { title?: s
     const redirectScheme = Linking.createURL("auth/callback");
     const authUrl = `${webUrl}/login?mobileRedirect=${encodeURIComponent(redirectScheme)}`;
 
-    const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectScheme);
-    if (result.type === "success" && result.url) {
-      try {
-        const urlStr = result.url.replace("#", "?");
-        const queryIdx = urlStr.indexOf("?");
-        if (queryIdx !== -1) {
-          const queryString = urlStr.slice(queryIdx + 1);
-          const params = new URLSearchParams(queryString);
-          const accessToken = params.get("accessToken");
-          const refreshToken = params.get("refreshToken");
-          if (accessToken) {
-            await store.loginWithTokens({ accessToken, refreshToken: refreshToken || "" });
-            router.replace("/account");
-            return;
-          }
-        }
-      } catch (e) {
-        console.error("Lỗi đọc token từ WebBrowser:", e);
+    let capturedUrl = "";
+    const subscription = Linking.addEventListener("url", (event) => {
+      if (event.url?.includes("accessToken=")) {
+        capturedUrl = event.url;
       }
+    });
+
+    try {
+      const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectScheme);
+      const callbackUrl = result.type === "success" && result.url ? result.url : capturedUrl;
+      if (!callbackUrl) return;
+
+      const tokens = extractTokensFromUrl(callbackUrl);
+      if (!tokens) {
+        throw new Error("Không nhận được mã xác thực từ trình duyệt.");
+      }
+
+      await store.loginWithTokens(tokens);
+      router.replace("/account");
+    } finally {
+      subscription.remove();
     }
   }
 

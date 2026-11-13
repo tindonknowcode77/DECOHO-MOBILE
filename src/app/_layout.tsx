@@ -33,6 +33,10 @@ export default function RootLayout() {
           options={{ title: "Tài khoản DECOHO" }}
         />
         <Stack.Screen
+          name="auth/callback"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
           name="products/[id]"
           options={{ title: "Chi tiết sản phẩm" }}
         />
